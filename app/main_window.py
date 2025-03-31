@@ -28,12 +28,17 @@ class MenuWindow(QtWidgets.QWidget):
         self.setFixedSize(QtCore.QSize(150, 200))
 
         self.serialAttenuator = None
+        self.parser = ConfigParser()
+        self.parser.read(os.path.abspath(os.path.join(os.path.dirname(__file__), ".\\settings.ini")))
+        self.config = self.parser['GENERAL']
+
+        '''User Interface'''
 
         self.layoutMain = QtWidgets.QVBoxLayout()
 
         self.layoutCOM = QtWidgets.QHBoxLayout()
         self.layoutCOM.addWidget(QtWidgets.QLabel("Serial Port:"))
-        self.COMcomboBox = QtWidgets.QSpinBox(value=3)
+        self.COMcomboBox = QtWidgets.QSpinBox(value=int(self.config['port']))
         self.COMcomboBox.setMinimum(1)
         self.COMcomboBox.setMaximum(99)
         self.layoutCOM.addWidget(self.COMcomboBox)
@@ -42,9 +47,16 @@ class MenuWindow(QtWidgets.QWidget):
         self.layoutBaudRate = QtWidgets.QHBoxLayout()
         self.layoutBaudRate.addWidget(QtWidgets.QLabel("Baud Rate:"))
         self.baudRateLineEdit = QtWidgets.QLineEdit()
-        self.baudRateLineEdit.setText("31250")
+        self.baudRateLineEdit.setText(str(self.config['baudrate']))
         self.layoutBaudRate.addWidget(self.baudRateLineEdit)
         self.layoutMain.addLayout(self.layoutBaudRate)
+
+        self.layoutTimeout = QtWidgets.QHBoxLayout()
+        self.layoutTimeout.addWidget(QtWidgets.QLabel("Timeout:"))
+        self.timeoutLineEdit = QtWidgets.QLineEdit()
+        self.timeoutLineEdit.setText(str(self.config['timeout']))
+        self.layoutTimeout.addWidget(self.timeoutLineEdit)
+        self.layoutMain.addLayout(self.layoutTimeout)
 
         self.connectButton = QtWidgets.QPushButton("Connect")
         self.connectButton.clicked.connect(lambda: self.connect_to_serial())
@@ -65,20 +77,32 @@ class MenuWindow(QtWidgets.QWidget):
         self.setLayout(self.layoutMain)
 
     def connect_to_serial(self):
-        if self.serialAttenuator is None:
-            self.serialAttenuator = serial.Serial(f'COM{self.COMcomboBox.value()}', self.baudRateLineEdit.text(), timeout=2)
-            print(self.serialAttenuator.name)
-            self.serialAttenuator.write('CL_IDENTITY?#'.encode())
-            name = self.serialAttenuator.readline().decode()
-            self.nameLineEdit.setText(name)
-            print(name)
+        try:
+            if self.serialAttenuator is None:
+                self.serialAttenuator = serial.Serial(f'COM{self.COMcomboBox.value()}', self.baudRateLineEdit.text(), timeout=int(self.timeoutLineEdit.text()))
+                self.serialAttenuator.write('CL_IDENTITY?#'.encode())
+                name = self.serialAttenuator.readline().decode()
+                self.nameLineEdit.setText(name)
+                self.update_parser()
+        except:
+            print('Connection Error')
 
     def disconnect_from_serial(self):
         if self.serialAttenuator is not None:
             self.serialAttenuator.close()
             self.serialAttenuator = None
             self.nameLineEdit.clear()
-            print("Disconnected from serial port")
+            self.update_parser()
+
+    def update_parser(self):
+        new_parser = ConfigParser()
+        new_parser.read(os.path.abspath(os.path.join(os.path.dirname(__file__), ".\\settings.ini")))
+        update_file = open(os.path.abspath(os.path.join(os.path.dirname(__file__), ".\\settings.ini")), 'w')
+        new_parser['GENERAL']['port'] = str(self.COMcomboBox.value())
+        new_parser['GENERAL']['baudrate'] = str(self.baudRateLineEdit.text())
+        new_parser['GENERAL']['timeout'] = str(self.timeoutLineEdit.text())
+        new_parser.write(update_file)
+        update_file.close()
         
 
 class MainWindow(QtWidgets.QMainWindow):
