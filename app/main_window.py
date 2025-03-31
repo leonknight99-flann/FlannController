@@ -1,5 +1,10 @@
+from ast import main
+from re import M
 import sys
-from tkinter import N
+import os
+import serial
+
+from configparser import ConfigParser
 
 from qtpy import QtCore, QtWidgets, QtGui
 
@@ -13,32 +18,78 @@ class Color(QtWidgets.QWidget):
         self.setPalette(palette)
 
 class MenuWindow(QtWidgets.QWidget):
-    """
-    This "window" is a QWidget. If it has no parent, it
-    will appear as a free-floating window as we want.
-    """
 
     def __init__(self):
         super().__init__()
+        
         self.setWindowTitle("Menu")
-        self.setWindowIcon(QtGui.QIcon("FlannMicrowave.ico"))
+        self.setWindowIcon(QtGui.QIcon(os.path.abspath(os.path.join(os.path.dirname(__file__), ".\\FlannMicrowave.ico"))))
+        self.setWindowFlag(QtCore.Qt.WindowCloseButtonHint, False)
+        self.setFixedSize(QtCore.QSize(150, 200))
 
-        layout = QtWidgets.QVBoxLayout()
+        self.serialAttenuator = None
 
-        self.label = QtWidgets.QLabel("feature not implemented yet")
-        layout.addWidget(self.label)
-        self.setLayout(layout)
+        self.layoutMain = QtWidgets.QVBoxLayout()
+
+        self.layoutCOM = QtWidgets.QHBoxLayout()
+        self.layoutCOM.addWidget(QtWidgets.QLabel("Serial Port:"))
+        self.COMcomboBox = QtWidgets.QSpinBox(value=3)
+        self.COMcomboBox.setMinimum(1)
+        self.COMcomboBox.setMaximum(99)
+        self.layoutCOM.addWidget(self.COMcomboBox)
+        self.layoutMain.addLayout(self.layoutCOM)
+
+        self.layoutBaudRate = QtWidgets.QHBoxLayout()
+        self.layoutBaudRate.addWidget(QtWidgets.QLabel("Baud Rate:"))
+        self.baudRateLineEdit = QtWidgets.QLineEdit()
+        self.baudRateLineEdit.setText("31250")
+        self.layoutBaudRate.addWidget(self.baudRateLineEdit)
+        self.layoutMain.addLayout(self.layoutBaudRate)
+
+        self.connectButton = QtWidgets.QPushButton("Connect")
+        self.connectButton.clicked.connect(lambda: self.connect_to_serial())
+        self.layoutMain.addWidget(self.connectButton)
+
+        self.nameLineEdit = QtWidgets.QLineEdit()
+        self.nameLineEdit.setReadOnly(True)    # Read-only
+        self.layoutMain.addWidget(self.nameLineEdit)
+        
+        self.disconnectButton = QtWidgets.QPushButton("Disconnect")
+        self.disconnectButton.clicked.connect(lambda: self.disconnect_from_serial())
+        self.layoutMain.addWidget(self.disconnectButton)
+
+        self.positionToggle = QtWidgets.QCheckBox()
+        self.positionToggle.setText("Set Position")
+        self.layoutMain.addWidget(self.positionToggle)
+        
+        self.setLayout(self.layoutMain)
+
+    def connect_to_serial(self):
+        if self.serialAttenuator is None:
+            self.serialAttenuator = serial.Serial(f'COM{self.COMcomboBox.value()}', self.baudRateLineEdit.text(), timeout=2)
+            print(self.serialAttenuator.name)
+            self.serialAttenuator.write('CL_IDENTITY?#'.encode())
+            name = self.serialAttenuator.readline().decode()
+            self.nameLineEdit.setText(name)
+            print(name)
+
+    def disconnect_from_serial(self):
+        if self.serialAttenuator is not None:
+            self.serialAttenuator.close()
+            self.serialAttenuator = None
+            self.nameLineEdit.clear()
+            print("Disconnected from serial port")
+        
 
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
 
         self.setWindowTitle("Flann 024")
-        self.setWindowIcon(QtGui.QIcon("FlannMicrowave.ico"))
         self.setFixedSize(QtCore.QSize(260, 300))
-        # self.setFixedSize()
 
-        self.mWindow = None
+        self.attenuator = None
+        self.mWindow = MenuWindow()
 
         self.layoutMain = QtWidgets.QVBoxLayout()
 
@@ -49,7 +100,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.menuButton = QtWidgets.QPushButton("Menu")
         self.menuButton.setFixedSize(QtCore.QSize(50, 50))
-        self.menuButton.clicked.connect(self.show_menu_window)
+        self.menuButton.clicked.connect(lambda: self.toggle_menu_window())
 
         # Layout 1a
         self.layout1a = QtWidgets.QGridLayout()
@@ -71,6 +122,7 @@ class MainWindow(QtWidgets.QMainWindow):
         
         # Layout 2
         self.layout2 = QtWidgets.QHBoxLayout()
+        
         # Layout 2a
         self.layout2a = QtWidgets.QGridLayout()
         self.keyboardButtonMap = {}
@@ -88,7 +140,6 @@ class MainWindow(QtWidgets.QMainWindow):
                 else:
                     self.keyboardButtonMap[key].clicked.connect(lambda _, key=key: self.append_attenuation_entry(key))
                 self.layout2a.addWidget(self.keyboardButtonMap[key], row, col)
-
 
         # Layout 2b
         self.layout2b = QtWidgets.QVBoxLayout()
@@ -121,14 +172,15 @@ class MainWindow(QtWidgets.QMainWindow):
         self.widgetMain.setLayout(self.layoutMain)
         self.setCentralWidget(self.widgetMain)
 
-
-    def show_menu_window(self):  # Currently casues a click twice to open bug
-        if self.mWindow is None:
-            self.mWindow = MenuWindow()
-            self.mWindow.show()
+    def toggle_menu_window(self):
+        if self.mWindow.isVisible():
+            self.mWindow.hide()
         else:
-            self.mWindow.close()
-            self.mWindow = None
+            self.mWindow.show()
+        self.attenuator = self.mWindow.serialAttenuator
+
+    def closeEvent(self, event):
+        QtWidgets.QApplication.closeAllWindows()
 
     def append_attenuation_entry(self, text):
         self.attenEnterLineEdit.setText(self.attenEnterLineEdit.text() + text)
@@ -142,9 +194,20 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def go_to_attenuation(self):
         newAttenuation = self.read_attenuation_entry()
-        self.clear_attenuation_entry()
-        self.attenReadLineEdit.setText('Goto')
-        pass  # Placeholder for future implementation
+        print(f"New attenuation: {newAttenuation}")
+
+        if self.attenuator == None:
+            print("Serial port not connected")
+            return
+        if self.mWindow.positionToggle.isChecked():
+            self.attenuator.write(f'CL_STEPS_SET {newAttenuation}#'.encode())
+            self.clear_attenuation_entry()
+            self.attenReadLineEdit.setText('Position Set')
+        else:
+            self.attenuator.write(f'CL_VALUE_SET {newAttenuation}#'.encode())
+            self.clear_attenuation_entry()
+            self.attenuator.write('CL_VALUE?#'.encode())
+            self.attenReadLineEdit.setText(self.attenuator.readline().decode())
 
     def increment_attenuation(self):
         self.attenReadLineEdit.setText('Inc +')
@@ -155,12 +218,10 @@ class MainWindow(QtWidgets.QMainWindow):
         pass  # placeholder for future implementation
             
 
-def main():
+if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
+    app.setWindowIcon(QtGui.QIcon(os.path.abspath(os.path.join(os.path.dirname(__file__), ".\\FlannMicrowave.ico"))))
     window = MainWindow()
     window.show()
 
     app.exec()
-
-if __name__ == '__main__':
-    main()
