@@ -18,7 +18,7 @@ class Color(QtWidgets.QWidget):
         self.setPalette(palette)
 
 class MenuWindow(QtWidgets.QWidget):
-
+    '''Settings window for the 024'''
     def __init__(self):
         super().__init__()
         
@@ -82,6 +82,7 @@ class MenuWindow(QtWidgets.QWidget):
         
 
 class MainWindow(QtWidgets.QMainWindow):
+    '''Main 024 control window insprired by the Flann 625'''
     def __init__(self):
         super().__init__()
 
@@ -92,6 +93,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.mWindow = MenuWindow()
 
         self.layoutMain = QtWidgets.QVBoxLayout()
+
+        self.disableButtonGroup = QtWidgets.QButtonGroup()
 
         '''User Interface'''
 
@@ -115,6 +118,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.layout1a.addWidget(QtWidgets.QLabel("Entry:"), 1,0)
         self.attenEnterLineEdit = QtWidgets.QLineEdit()
+        self.attenEnterLineEdit.returnPressed.connect(lambda: self.go_to_attenuation())
         self.attenEnterLineEdit.setFixedWidth(120)
         self.attenEnterLineEdit.setStyleSheet("background-color: white")
         self.layout1a.addWidget(self.attenEnterLineEdit, 1,1)
@@ -146,14 +150,17 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.incrementButton = QtWidgets.QPushButton("Inc +")
         self.incrementButton.clicked.connect(lambda: self.increment_attenuation())
+        self.disableButtonGroup.addButton(self.incrementButton)
         self.incrementButton.setFixedHeight(76)
         self.layout2b.addWidget(self.incrementButton)
         self.decrementButton = QtWidgets.QPushButton("Dec -")
         self.decrementButton.clicked.connect(lambda: self.decrement_attenuation())
+        self.disableButtonGroup.addButton(self.decrementButton)
         self.decrementButton.setFixedHeight(76)
         self.layout2b.addWidget(self.decrementButton)
         self.enterButton = QtWidgets.QPushButton("Goto")
         self.enterButton.clicked.connect(lambda: self.go_to_attenuation())
+        self.disableButtonGroup.addButton(self.enterButton)
         self.enterButton.setFixedHeight(50)
         self.layout2b.addWidget(self.enterButton)
 
@@ -172,11 +179,17 @@ class MainWindow(QtWidgets.QMainWindow):
         self.widgetMain.setLayout(self.layoutMain)
         self.setCentralWidget(self.widgetMain)
 
-    def toggle_menu_window(self):
+    def toggle_menu_window(self):  # Currently this limits the main window interactions due to an inheritance coding error where the self.attenuator does not update when the settings are changed in the menu window
         if self.mWindow.isVisible():
             self.mWindow.hide()
+            for button in self.disableButtonGroup.buttons():
+                button.setEnabled(True)
+            self.attenEnterLineEdit.setReadOnly(False)
         else:
             self.mWindow.show()
+            for button in self.disableButtonGroup.buttons():
+                button.setEnabled(False)
+            self.attenEnterLineEdit.setReadOnly(True)
         self.attenuator = self.mWindow.serialAttenuator
 
     def closeEvent(self, event):
@@ -197,12 +210,16 @@ class MainWindow(QtWidgets.QMainWindow):
         print(f"New attenuation: {newAttenuation}")
 
         if self.attenuator == None:
+            self.attenReadLineEdit.setText('Connection Error')
             print("Serial port not connected")
             return
         if self.mWindow.positionToggle.isChecked():
+            if len(newAttenuation) < 4:
+                zeroString = '0' * (4 - len(newAttenuation))
+                newAttenuation = zeroString + newAttenuation
             self.attenuator.write(f'CL_STEPS_SET {newAttenuation}#'.encode())
             self.clear_attenuation_entry()
-            self.attenReadLineEdit.setText('Position Set')
+            self.attenReadLineEdit.setText(f'Position {newAttenuation}')
         else:
             self.attenuator.write(f'CL_VALUE_SET {newAttenuation}#'.encode())
             self.clear_attenuation_entry()
