@@ -299,7 +299,7 @@ class MainWindow(QtWidgets.QMainWindow):
         print(f"Decrement: {decrement}")
         try:
             if -float(decrement) + current_val > float(self.config['min_attenuation']):
-                self.attenuator.write(f'CL_DECR_SET {decrement}#'.encode())
+                self.attenuator.write(f'CL_INCR_SET {decrement}#'.encode())
                 self.attenuator.readline().decode()
                 self.attenuator.write(f'CL_DECREMENT#'.encode())
                 self.attenuator.readline().decode()
