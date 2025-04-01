@@ -3,6 +3,7 @@ from re import M
 import sys
 import os
 import serial
+import time
 
 from configparser import ConfigParser
 
@@ -25,7 +26,7 @@ class MenuWindow(QtWidgets.QWidget):
         self.setWindowTitle("Menu")
         self.setWindowIcon(QtGui.QIcon(os.path.abspath(os.path.join(os.path.dirname(__file__), ".\\FlannMicrowave.ico"))))
         self.setWindowFlag(QtCore.Qt.WindowCloseButtonHint, False)
-        self.setFixedSize(QtCore.QSize(150, 200))
+        self.setFixedSize(QtCore.QSize(150, 220))
 
         self.serialAttenuator = None
         self.parser = ConfigParser()
@@ -115,6 +116,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.attenuator = None
         self.mWindow = MenuWindow()
+        self.config = self.mWindow.config
 
         self.layoutMain = QtWidgets.QVBoxLayout()
 
@@ -220,7 +222,7 @@ class MainWindow(QtWidgets.QMainWindow):
         QtWidgets.QApplication.closeAllWindows()
 
     def append_attenuation_entry(self, text):
-        self.attenEnterLineEdit.setText(self.attenEnterLineEdit.text() + text)
+        self.attenEnterLineEdit.setText(self.read_attenuation_entry() + text)
         self.attenEnterLineEdit.setFocus()
 
     def read_attenuation_entry(self):
@@ -229,34 +231,82 @@ class MainWindow(QtWidgets.QMainWindow):
     def clear_attenuation_entry(self):
         self.attenEnterLineEdit.clear()
 
+    def get_current_attenuation(self):
+        time.sleep(float(self.config['sleep']))
+        self.attenuator.write('CL_VALUE?#'.encode())
+        current_val = self.attenuator.readline().decode()
+        print(current_val)
+        try:
+            current_val = current_val.split(' ')[-1].strip()  # readline returns "Vane is at 20.0dB"
+            print(current_val)
+            current_val = current_val.rsplit('dB')[0]  # removes the dB from the end of the string "3.0dB"
+            print(current_val)
+            current_val = float(current_val.rsplit('\x00')[0])   # removes the dB\x00 from the end of the string "3.0\x00"
+            print(current_val)
+        except ValueError:
+            current_val = '0'
+            print("Error reading current attenuation value")
+        
+        return current_val
+
     def go_to_attenuation(self):
         newAttenuation = self.read_attenuation_entry()
         print(f"New attenuation: {newAttenuation}")
+        self.clear_attenuation_entry()
 
         if self.attenuator == None:
             self.attenReadLineEdit.setText('Connection Error')
             print("Serial port not connected")
             return
         if self.mWindow.positionToggle.isChecked():
-            if len(newAttenuation) < 4:
-                zeroString = '0' * (4 - len(newAttenuation))
-                newAttenuation = zeroString + newAttenuation
-            self.attenuator.write(f'CL_STEPS_SET {newAttenuation}#'.encode())
-            self.clear_attenuation_entry()
-            self.attenReadLineEdit.setText(f'Position {newAttenuation}')
+            try:
+                if len(newAttenuation) < 4:
+                    zeroString = '0' * (4 - len(newAttenuation))
+                    newAttenuation = zeroString + newAttenuation
+                self.attenuator.write(f'CL_STEPS_SET {newAttenuation}#'.encode())
+                self.attenuator.readline().decode()
+                self.attenReadLineEdit.setText(f'Position {newAttenuation}')
+            except:
+                print("Error setting position")
+                self.attenReadLineEdit.setText('Position Error')
         else:
-            self.attenuator.write(f'CL_VALUE_SET {newAttenuation}#'.encode())
-            self.clear_attenuation_entry()
-            self.attenuator.write('CL_VALUE?#'.encode())
-            self.attenReadLineEdit.setText(self.attenuator.readline().decode())
+            try:
+                self.attenuator.write(f'CL_VALUE_SET {newAttenuation}#'.encode())
+                self.attenuator.readline().decode()
+                self.attenReadLineEdit.setText(str(self.get_current_attenuation()))
+            except:
+                print("Error setting attenuation")
+                self.attenReadLineEdit.setText('dB Error')
 
     def increment_attenuation(self):
-        self.attenReadLineEdit.setText('Inc +')
-        pass  # placeholder for future implementation
+        increment = self.read_attenuation_entry()
+        current_val = self.get_current_attenuation()
+        print(f"Increment: {increment}")
+        try:
+            if float(increment) + current_val < float(self.config['max_attenuation']):
+                self.attenuator.write(f'CL_INCR_SET {increment}#'.encode())
+                self.attenuator.readline().decode()
+                self.attenuator.write(f'CL_INCREMENT#'.encode())
+                self.attenuator.readline().decode()
+                self.attenReadLineEdit.setText(str(self.get_current_attenuation()))
+        except:
+            print("Error incrementing attenuation")
+            self.attenReadLineEdit.setText('dB Error')
 
     def decrement_attenuation(self):
-        self.attenReadLineEdit.setText('Dec -')
-        pass  # placeholder for future implementation
+        decrement = self.read_attenuation_entry()
+        current_val = self.get_current_attenuation()
+        print(f"Decrement: {decrement}")
+        try:
+            if -float(decrement) + current_val > float(self.config['min_attenuation']):
+                self.attenuator.write(f'CL_DECR_SET {decrement}#'.encode())
+                self.attenuator.readline().decode()
+                self.attenuator.write(f'CL_DECREMENT#'.encode())
+                self.attenuator.readline().decode()
+                self.attenReadLineEdit.setText(str(self.get_current_attenuation()))
+        except:
+            print("Error decrementing attenuation")
+            self.attenReadLineEdit.setText('dB Error')
             
 
 if __name__ == '__main__':
