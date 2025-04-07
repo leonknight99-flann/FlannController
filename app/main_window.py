@@ -80,7 +80,7 @@ class MenuWindow(QtWidgets.QWidget):
     def connect_to_serial(self):
         try:
             if self.serialAttenuator is None:
-                self.serialAttenuator = serial.Serial(f'COM{self.COMcomboBox.value()}', self.baudRateLineEdit.text(), timeout=int(self.timeoutLineEdit.text()))
+                self.serialAttenuator = serial.Serial(f'COM{self.COMcomboBox.value()}', self.baudRateLineEdit.text(), timeout=float(self.timeoutLineEdit.text()))
                 self.serialAttenuator.write('CL_IDENTITY?#'.encode())
                 name = self.serialAttenuator.readline().decode()
                 self.nameLineEdit.setText(name)
@@ -234,14 +234,14 @@ class MainWindow(QtWidgets.QMainWindow):
     def get_current_attenuation(self):
         time.sleep(float(self.config['sleep']))
         self.attenuator.write('CL_VALUE?#'.encode())
-        current_val = self.attenuator.readline().decode()
+        current_val = self.attenuator.readline().split(b'\x00')[0] .decode()# removes the \x00 from the end of the string "3.0\x00"
         print(current_val)
         try:
             current_val = current_val.split(' ')[-1].strip()  # readline returns "Vane is at 20.0dB"
             print(current_val)
             current_val = current_val.rsplit('dB')[0]  # removes the dB from the end of the string "3.0dB"
             print(current_val)
-            current_val = float(current_val.rsplit('\x00')[0])   # removes the dB\x00 from the end of the string "3.0\x00"
+            current_val = float(current_val)
             print(current_val)
         except ValueError:
             current_val = '0'
