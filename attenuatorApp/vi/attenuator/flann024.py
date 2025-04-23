@@ -32,3 +32,17 @@ class Attenuator024(Attenuator):
             self.read_serial
         else:
             raise(ValueError('Not an excepted attenuation'))
+        
+    @property
+    def position(self):
+        '''Current Step Position'''
+        raise(NotImplementedError)
+    
+    @position.setter
+    def position(self, steps):
+        '''Allowed values between 0-8000'''
+        if all([0<steps<8000,isinstance(steps,int)]):
+            self.write_serial(f'CL_STEPS_SET {steps}#')
+            self.read_serial
+        else:
+            raise(ValueError('Not an excepted attenuation'))
