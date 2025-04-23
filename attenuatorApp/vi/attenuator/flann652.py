@@ -1,5 +1,6 @@
 from attenuator import Attenuator
 
+
 class Attenuator625(Attenuator):
     def __init__(self, com_address, baudrate, timeout):
         super().__init__(com_address, baudrate, timeout)

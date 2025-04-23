@@ -1,6 +1,5 @@
 from attenuator import Attenuator
 
-print(isinstance(float(50), float))
 
 class Attenuator024(Attenuator):
     def __init__(self, com_address, baudrate, timeout):
