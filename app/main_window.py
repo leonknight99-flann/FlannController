@@ -1,5 +1,6 @@
 import sys
 import os
+from numpy import tri
 import serial
 import time
 
@@ -12,6 +13,8 @@ from qtpy.QtGui import QAction, QIcon, QKeySequence, QPalette, QColor
 
 from qtpy.QtWidgets import (QApplication, QFileDialog, QMainWindow,
                                QMdiArea, QMessageBox, QTextEdit, QWidget)
+
+from attenuator_window import AttenuatorWindow
 
 class Color(QWidget):
     def __init__(self, r,g,b):
@@ -26,7 +29,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("Flann Programmable")
+        self.setWindowTitle("Flann")
 
         self._mdi_area = QMdiArea()
         self._mdi_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
@@ -37,14 +40,21 @@ class MainWindow(QMainWindow):
         self.create_menus()
         # self.update_menus()
 
+    def create_attenuator_window(self):
+        attenuator_window = AttenuatorWindow()
+        attenuator_window.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+        self._mdi_area.addSubWindow(attenuator_window)
+        attenuator_window.show()
+        attenuator_window.setWindowTitle("Flann 024")
+
 
     def closeEvent(self, event):
         self._mdi_area.closeAllSubWindows()
         if self._mdi_area.currentSubWindow():
             event.ignore()
-        else:
-            self.write_settings()
-            event.accept()
+        # else:
+        #     self.write_settings()
+        #     event.accept()
 
     def create_status_bar(self):
         self.statusBar().showMessage("Ready")
@@ -53,7 +63,7 @@ class MainWindow(QMainWindow):
 
         icon = QIcon.fromTheme(QIcon.ThemeIcon.WindowNew)
         self.new_attenuator = QAction(icon, "&New Attenuator", self, shortcut=QKeySequence.StandardKey.New,
-                                statusTip="Open a new attenuator window")
+                                statusTip="Open a new attenuator window", triggered=self.create_attenuator_window)
 
         icon = QIcon.fromTheme(QIcon.ThemeIcon.WindowNew)
         self.new_switch = QAction(icon, "&New Switch", self, shortcut=QKeySequence.StandardKey.Open,

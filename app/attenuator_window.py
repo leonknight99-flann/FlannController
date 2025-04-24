@@ -5,7 +5,7 @@ from qtpy.QtCore import (QByteArray, QFile, QFileInfo, QSettings,
 
 from qtpy.QtGui import QAction, QIcon, QKeySequence, QPalette, QColor
 
-from qtpy.QtWidgets import (QApplication, QFileDialog, QMainWindow,
+from qtpy.QtWidgets import (QApplication, QFileDialog, QMdiSubWindow,
                                QMdiArea, QMessageBox, QTextEdit, QWidget,
                                QVBoxLayout, QHBoxLayout, QGridLayout,
                                QPushButton, QLineEdit, QLabel, QButtonGroup)
@@ -19,7 +19,7 @@ class Color(QWidget):
         palette.setColor(QPalette.Window, QColor(r,g,b))
         self.setPalette(palette)
 
-class MainWindow(QMainWindow):
+class AttenuatorWindow(QMdiSubWindow):
     '''Main 024 control window insprired by the Flann 625'''
     def __init__(self):
         super().__init__()
@@ -116,7 +116,7 @@ class MainWindow(QMainWindow):
 
         self.widgetMain = Color(132,181,141)
         self.widgetMain.setLayout(self.layoutMain)
-        self.setCentralWidget(self.widgetMain)
+        self.setLayout(self.widgetMain)
 
     # def toggle_menu_window(self):  # Currently this limits the main window interactions due to an inheritance coding error where the self.attenuator does not update when the settings are changed in the menu window
     #     if self.mWindow.isVisible():
