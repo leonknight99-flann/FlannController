@@ -5,4 +5,4 @@ Flann's programmable attenuator drivers
 """
 from .attenuator import Attenuator
 from .flann024 import Attenuator024
-from .flann652 import Attenuator625
+from .flann625 import Attenuator625
