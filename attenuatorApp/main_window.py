@@ -7,6 +7,8 @@ from configparser import ConfigParser
 
 from qtpy import QtCore, QtWidgets, QtGui
 
+from vi.attenuator import Attenuator024, Attenuator625
+
 class Color(QtWidgets.QWidget):
     def __init__(self, r,g,b):
         super().__init__()
