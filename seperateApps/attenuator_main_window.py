@@ -31,7 +31,7 @@ class MenuWindow(QtWidgets.QWidget):
         self.attenuator = None
         self.attenuator_series = 'Attenuator'
         self.parser = ConfigParser()
-        self.parser.read(os.path.abspath(os.path.join(os.path.dirname(__file__), ".\\settings.ini")))
+        self.parser.read(os.path.abspath(os.path.join(os.path.dirname(__file__), ".\\attenuatorSettings.ini")))
         self.config = self.parser['GENERAL']
 
         '''User Interface'''
@@ -120,8 +120,8 @@ class MenuWindow(QtWidgets.QWidget):
 
     def update_parser(self):
         new_parser = ConfigParser()
-        new_parser.read(os.path.abspath(os.path.join(os.path.dirname(__file__), ".\\settings.ini")))
-        update_file = open(os.path.abspath(os.path.join(os.path.dirname(__file__), ".\\settings.ini")), 'w')
+        new_parser.read(os.path.abspath(os.path.join(os.path.dirname(__file__), ".\\attenuatorSettings.ini")))
+        update_file = open(os.path.abspath(os.path.join(os.path.dirname(__file__), ".\\attenuatorSettings.ini")), 'w')
         new_parser['GENERAL']['port'] = str(self.addressLineEdit.text())
         new_parser['GENERAL']['baudrate'] = str(self.baudRateLineEdit.text())
         new_parser['GENERAL']['timeout'] = str(self.timeoutLineEdit.text())
