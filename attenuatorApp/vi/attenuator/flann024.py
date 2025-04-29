@@ -71,6 +71,9 @@ class Attenuator024(Attenuator):
     def position(self, steps):
         '''Allowed values between 0-8000'''
         if all([0<=steps<=8000,isinstance(steps,int)]):
+            steps = str(steps)
+            steps = steps.zfill(4)
+            print(steps)
             self.write(f'CL_STEPS_SET {steps}#')
             # self.read  # Currently not implemented in the device
         else:
