@@ -2,15 +2,26 @@ from .attenuator import Attenuator
 
 
 class Attenuator625(Attenuator):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, address: str, tcp_port: int, *args, **kwargs):
+        super().__init__(address, *args, **kwargs)
 
-        # id_str = self.id()
-        # assert('625' in id_str)
+        self._resource.connect((address, tcp_port))
 
+        self.series_number = '625'
+
+        id_str = self.id()
+        assert(self.series_number in id_str)
+
+    @property
     def id(self):
         '''Instrument ID string'''
         self.write('IDENTITY?\r\n')
+        return self.read
+    
+    @property
+    def instrument_status(self):
+        '''Instrument status'''
+        self.write('INST_STAT?\r\n')
         return self.read
 
     def reset(self):

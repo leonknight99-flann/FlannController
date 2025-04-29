@@ -2,17 +2,47 @@ from .attenuator import Attenuator
 
 
 class Attenuator024(Attenuator):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, address: str, timeout: float, baudrate: int, *args, **kwargs):
+        super().__init__(address, *args, **kwargs)
+
+        self._resource.port = address
+        self._resource.timeout = timeout
+        self._resource.baudrate = baudrate
+        self._resource.open()
+
+        self.series_number = '024'
 
         id_str = self.id()
-        assert('024' in id_str)
+        assert(self.series_number in id_str)
 
+    @property
+    def timeout(self) -> float | None:
+        return self._resource.timeout
+    
+    @timeout.setter
+    def timeout(self, timeout: float | None) -> None:
+        self._resource.timeout = timeout
+
+    @property
+    def baudrate(self) -> int | None:
+        return self._resource.baudrate
+    
+    @baudrate.setter
+    def baudrate(self, baurate: int | None) -> None:
+        self._resource.baudrate = baurate
+
+    @property
     def id(self):
         '''Instrument ID string'''
         self.write('CL_IDENTITY?#')
         return self.read
-
+    
+    @property
+    def instrument_status(self):
+        '''Instrument status'''
+        self.write('CL_INST_STAT?#')
+        return self.read
+    
     def reset(self):
         '''Reset instrument.'''
         self.write('CL_RESET_INST#')
@@ -28,7 +58,7 @@ class Attenuator024(Attenuator):
         '''Allowed values between 0-50 dB with 0.1 dB precision'''
         if 0 <= atten_db <= 50:
             self.write(f'CL_VALUE_SET {atten_db}#')
-            self.read
+            self.read()
         else:
             raise(ValueError('Not an excepted attenuation'))
         
@@ -42,7 +72,7 @@ class Attenuator024(Attenuator):
         '''Allowed values between 0-8000'''
         if all([0<=steps<=8000,isinstance(steps,int)]):
             self.write(f'CL_STEPS_SET {steps}#')
-            self.read
+            # self.read  # Currently not implemented in the device
         else:
             raise(ValueError('Not an excepted steps position'))
         
