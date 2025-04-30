@@ -1,7 +1,5 @@
 import sys
 import os
-import serial
-import time
 
 from configparser import ConfigParser
 

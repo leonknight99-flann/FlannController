@@ -1,6 +1,6 @@
 """
-.. module:: attenuatorApp.vi.attenuator.flann
-=============================================
+.. module:: sperateApps.vi.attenuator
+=======================================
 Flann's programmable attenuator drivers
 """
 from .attenuator import Attenuator
