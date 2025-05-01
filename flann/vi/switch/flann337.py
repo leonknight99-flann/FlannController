@@ -12,18 +12,26 @@ class Switch337(FlannProgrammable):
     '''Class for Flann's 337 Programmable Switch Box'''
     def __init__(self, switch: SwitchNumber, address: str, timeout: float, baudrate: int, *args, **kwargs):
         super().__init__(address, *args, **kwargs)
-
+            
         self._resource.port = address
         self._resource.timeout = timeout
         self._resource.baudrate = baudrate
         self._resource.open()
 
-        self.switch_number = switch
+        self._switch_number = switch
 
         self.series_number = '337'
 
         # id_str = self.id()
         # assert(self.series_number in id_str)
+
+    @property
+    def switch(self) -> int | None:
+        return self._switch_number
+    
+    @switch.setter
+    def switch(self, switch: SwitchNumber | None) -> None:
+        self._switch_number = switch
 
     @property
     def timeout(self) -> float | None:
@@ -50,15 +58,15 @@ class Switch337(FlannProgrammable):
     @property
     def position(self):
         '''Current switch position'''
-        self.write(f'337_{self.switch_number.value}_POSITION?')
+        self.write(f'337 {int(self._switch_number)} POSITION?')
         return self.read
     
     def position1(self):
         '''Switch position 1'''
-        self.write(f'337_{self.switch_number.value}_POSITION_1')
+        self.write(f'337 {int(self._switch_number)} POSITION 1')
         self.read
 
     def position2(self):
         '''Switch position 2'''
-        self.write(f'337_{self.switch_number.value}_POSITION_2')
+        self.write(f'337 {int(self._switch_number)} POSITION 2')
         self.read
