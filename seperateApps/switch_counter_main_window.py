@@ -1,9 +1,12 @@
 import sys
 import os
 
+import time
+
 from configparser import ConfigParser
 
 from qtpy import QtCore, QtWidgets, QtGui
+
 
 class MainWindow(QtWidgets.QMainWindow):
     '''Switch Counter Main Window'''
@@ -21,6 +24,13 @@ class MainWindow(QtWidgets.QMainWindow):
         self.config = self.parser['GENERAL']
         self.counter = self.parser['COUNTER']['count']
 
+        self.timer = QtCore.QTimer(self)
+        self.timer.timeout.connect(self.switch_the_switch)
+
+        if int(self.config['fullscreen']) == True:
+            self.setWindowFlag(QtCore.Qt.FramelessWindowHint) 
+            self.showFullScreen()
+
         '''User Interface'''
 
         # Layout 1
@@ -35,14 +45,14 @@ class MainWindow(QtWidgets.QMainWindow):
         self.startButton = QtWidgets.QPushButton("Start")
         self.startButton.setFixedSize(QtCore.QSize(100, 50))
         self.startButton.setStyleSheet("color: white; background-color: rgb(132,181,141)")
-        self.startButton.clicked.connect(lambda: self.inc_counter())
+        self.startButton.clicked.connect(lambda: self.start_counter())
         self.startButton.setEnabled(False)
         self.disableButtonGroup.addButton(self.startButton)
 
         self.stopButton = QtWidgets.QPushButton("Stop")
         self.stopButton.setFixedSize(QtCore.QSize(100, 50))
         self.stopButton.setStyleSheet("color: white; background-color: rgb(132,181,141)")
-        self.stopButton.clicked.connect(lambda: self.inc_counter())
+        self.stopButton.clicked.connect(lambda: self.stop_counter())
         self.stopButton.setEnabled(False)
         self.disableButtonGroup.addButton(self.stopButton)
 
@@ -50,6 +60,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.disconnectButton.setFixedSize(QtCore.QSize(100, 50))
         self.disconnectButton.setStyleSheet("color: white; background-color: lightgray")
         self.disconnectButton.clicked.connect(lambda: self.disconnect_switch())
+
+        self.exitButton = QtWidgets.QPushButton("Exit")
+        self.exitButton.setFixedSize(QtCore.QSize(100, 50))
+        self.exitButton.setStyleSheet("color: white; background-color: gray")
+        self.exitButton.clicked.connect(lambda: self.closeEvent(self))
         
         # LCD Display Layout
 
@@ -64,6 +79,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.layout1.addWidget(self.startButton)
         self.layout1.addWidget(self.stopButton)
         self.layout1.addWidget(self.disconnectButton)
+        self.layout1.addWidget(self.exitButton)
 
         self.layoutMain.addLayout(self.layout1)
         self.layoutMain.addWidget(self.lcdDisplay)
@@ -85,13 +101,6 @@ class MainWindow(QtWidgets.QMainWindow):
         for button in self.disableButtonGroup.buttons():
             button.setEnabled(False)
 
-    def inc_counter(self):
-        self.counter = int(self.counter) + 1
-        self.update_parser()
-        print(self.counter)
-        self.lcdDisplay.setDigitCount(len(str(self.counter)))  # Auto expand the display size
-        self.lcdDisplay.display(int(self.counter))
-
     def update_parser(self):
         new_parser = ConfigParser()
         new_parser.read(os.path.abspath(os.path.join(os.path.dirname(__file__), ".\\switchCount.ini")))
@@ -99,6 +108,23 @@ class MainWindow(QtWidgets.QMainWindow):
         new_parser['COUNTER']['count'] = str(self.counter)
         new_parser.write(update_file)
         update_file.close()
+
+    def start_counter(self):
+        self.startButton.setEnabled(False)
+        self.stopButton.setEnabled(True)
+        self.timer.start(int(self.config['sleep']))  # Set the timer interval to the sleep time in milliseconds
+
+    def stop_counter(self):
+        self.startButton.setEnabled(True)
+        self.stopButton.setEnabled(False)
+        self.timer.stop()
+
+    def switch_the_switch(self):
+        self.counter = int(self.counter) + 1
+        self.update_parser()
+        print(self.counter)
+        self.lcdDisplay.setDigitCount(len(str(self.counter)))  # Auto expand the display size
+        self.lcdDisplay.display(int(self.counter))
 
 
 if __name__ == '__main__':
