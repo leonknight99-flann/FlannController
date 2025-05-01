@@ -1,6 +1,64 @@
+from enum import Enum
+
 from vi import FlannProgrammable
 
+class SwitchNumber(Enum):
+    '''Enum for switch numbers'''
+    SWITCH_1 = 1
+    SWITCH_2 = 2
+
+
 class Switch337(FlannProgrammable):
-    def __init__(self, address: str, timedelay: float=0):# baudrate: int=0, timeout: float=0, timedelay=0, tcp_port: int=0):
-        super().__init__(address, timedelay)  # baudrate, timeout, timedelay, tcp_port)
+    '''Class for Flann's 337 Programmable Switch Box'''
+    def __init__(self, switch: SwitchNumber, address: str, timeout: float, baudrate: int, *args, **kwargs):
+        super().__init__(address, *args, **kwargs)
+
         self._resource.port = address
+        self._resource.timeout = timeout
+        self._resource.baudrate = baudrate
+        self._resource.open()
+
+        self.switch_number = switch
+
+        self.series_number = '337'
+
+        id_str = self.id()
+        assert(self.series_number in id_str)
+
+    @property
+    def timeout(self) -> float | None:
+        return self._resource.timeout
+    
+    @timeout.setter
+    def timeout(self, timeout: float | None) -> None:
+        self._resource.timeout = timeout
+
+    @property
+    def baudrate(self) -> int | None:
+        return self._resource.baudrate
+    
+    @baudrate.setter
+    def baudrate(self, baurate: int | None) -> None:
+        self._resource.baudrate = baurate
+
+    @property
+    def id(self):
+        '''Instrument ID string'''
+        self.write('IDENTITY?')
+        return self.read
+    
+    @property
+    def position(self):
+        '''Current switch position'''
+        self.write(f'337_{self.switch_number.value}_POSITION?')
+        return self.read
+    
+    def position1(self):
+        '''Switch position 1'''
+        self.write(f'337_{self.switch_number.value}_POSITION_1')
+        self.read
+
+    def position2(self):
+        '''Switch position 2'''
+        self.write(f'337_{self.switch_number.value}_POSITION_2')
+        self.read

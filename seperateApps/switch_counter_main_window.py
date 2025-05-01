@@ -1,11 +1,11 @@
 import sys
 import os
 
-import time
-
 from configparser import ConfigParser
 
 from qtpy import QtCore, QtWidgets, QtGui
+
+from vi.switch import Switch337
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -18,6 +18,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.layoutMain = QtWidgets.QVBoxLayout()
 
         self.disableButtonGroup = QtWidgets.QButtonGroup()
+
+        self.switch = None
 
         self.parser = ConfigParser()
         self.parser.read(os.path.abspath(os.path.join(os.path.dirname(__file__), ".\\switchCount.ini")))
@@ -44,7 +46,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.startButton = QtWidgets.QPushButton("Start")
         self.startButton.setFixedSize(QtCore.QSize(100, 50))
-        self.startButton.setStyleSheet("color: white; background-color: rgb(132,181,141)")
+        self.startButton.setStyleSheet("color: white; background-color: lightgray")
         self.startButton.clicked.connect(lambda: self.start_counter())
         self.startButton.setEnabled(False)
         self.disableButtonGroup.addButton(self.startButton)
@@ -94,10 +96,25 @@ class MainWindow(QtWidgets.QMainWindow):
         QtWidgets.QApplication.closeAllWindows()
 
     def connect_switch(self):
-        for button in self.disableButtonGroup.buttons():
-            button.setEnabled(True)
+        try:
+            if self.switch is None:
+                self.switch = Switch337(switch=int(self.config['switch']), 
+                                        address=str(self.config['address']), 
+                                        timeout=float(self.config['timeout']), 
+                                        baudrate=int(self.config['baudrate']))
+            self.startButton.setStyleSheet("color: white; background-color: rgb(132,181,141)")    
+            for button in self.disableButtonGroup.buttons():
+                button.setEnabled(True)    
+                
+        except:
+            print("Error: Unable to connect to the switch.")
+
 
     def disconnect_switch(self):
+        if self.switch is not None:
+            self.switch.close()
+            self.switch = None
+            self.startButton.setStyleSheet("color: white; background-color: lightgray")
         for button in self.disableButtonGroup.buttons():
             button.setEnabled(False)
 
