@@ -5,7 +5,7 @@ import socket
 
 import time
 
-class Attenuator:
+class FlannProgrammable:
     def __init__(self, address: str, timedelay: float=0):
         if address.lower().startswith('com'):
             self._resource = serial.Serial(stopbits=1, parity=serial.PARITY_NONE, bytesize=8, xonxoff=True)  # Windows COM port

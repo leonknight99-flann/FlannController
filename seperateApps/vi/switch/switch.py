@@ -6,7 +6,7 @@ import socket
 import time
 
 class Switch:
-    def __init__(self, address: str, timedelay: float=0):# baudrate: int=0, timeout: float=0, timedelay=0, tcp_port: int=0):
+    def __init__(self, address: str, timedelay: float=0):
         if address.lower().startswith('com'):
             self._resource = serial.Serial(stopbits=1, parity=serial.PARITY_NONE, bytesize=8, xonxoff=True)  # Windows COM port
         else:
