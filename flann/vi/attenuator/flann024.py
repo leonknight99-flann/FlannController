@@ -1,4 +1,4 @@
-from vi import FlannProgrammable
+from flann.vi import FlannProgrammable
 
 
 class Attenuator024(FlannProgrammable):

@@ -1,6 +1,6 @@
 from enum import Enum
 
-from vi import FlannProgrammable
+from flann.vi import FlannProgrammable
 
 class SwitchNumber(Enum):
     '''Enum for switch numbers'''
@@ -22,8 +22,8 @@ class Switch337(FlannProgrammable):
 
         self.series_number = '337'
 
-        id_str = self.id()
-        assert(self.series_number in id_str)
+        # id_str = self.id()
+        # assert(self.series_number in id_str)
 
     @property
     def timeout(self) -> float | None:

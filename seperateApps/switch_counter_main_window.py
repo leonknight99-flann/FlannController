@@ -5,7 +5,7 @@ from configparser import ConfigParser
 
 from qtpy import QtCore, QtWidgets, QtGui
 
-from vi.switch import Switch337
+from flann.vi.switch import Switch337
 
 
 class MainWindow(QtWidgets.QMainWindow):

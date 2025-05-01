@@ -1,4 +1,4 @@
-from vi import FlannProgrammable
+from flann.vi import FlannProgrammable
 
 class Switch338(FlannProgrammable):
     def __init__(self, address: str, timedelay: float=0):# baudrate: int=0, timeout: float=0, timedelay=0, tcp_port: int=0):
