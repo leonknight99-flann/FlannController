@@ -144,6 +144,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.switchPosition = not self.switchPosition
         else:
             self.switch.position2()
+            self.switchPosition = not self.switchPosition
         self.update_parser()
         print(self.counter)
         self.lcdDisplay.setDigitCount(len(str(self.counter)))  # Auto expand the display size
