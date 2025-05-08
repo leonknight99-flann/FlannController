@@ -57,16 +57,26 @@ class Switch337(FlannProgrammable):
     
     @property
     def position(self):
-        '''Current switch position'''
-        self.write(f'337 {int(self._switch_number)} POSITION?')
+        '''Current selected switch position'''
+        self.write(f'SWITCH{int(self._switch_number)}_POS?')
         return self.read
     
     def position1(self):
-        '''Switch position 1'''
-        self.write(f'337 {int(self._switch_number)} POSITION 1')
+        '''Selected switch position 1'''
+        self.write(f'SWITCH{int(self._switch_number)}_POS1')
         self.read
 
     def position2(self):
-        '''Switch position 2'''
-        self.write(f'337 {int(self._switch_number)} POSITION 2')
+        '''Selected switch position 2'''
+        self.write(f'SWITCH{int(self._switch_number)}_POS2')
+        self.read
+
+    def toggle(self):
+        '''Toggle selected switch'''
+        self.write(f'SWITCH{int(self._switch_number)}_TOGGLE')
+        self.read
+
+    def toggle_all(self):
+        '''Toggle all switches in switch box'''
+        self.write('POSITION_TOGGLE')
         self.read
