@@ -27,10 +27,12 @@ class Switch337(FlannProgrammable):
 
     @property
     def switch(self) -> int | None:
+        '''Current selected switch'''
         return self._switch_number
     
     @switch.setter
     def switch(self, switch: SwitchNumber | None) -> None:
+        '''Select switch, allowed values 1 or 2'''
         self._switch_number = switch
 
     @property
