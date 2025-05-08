@@ -20,7 +20,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.disableButtonGroup = QtWidgets.QButtonGroup()
 
         self.switch = None
-        self.switchPosition = True
 
         self.parser = ConfigParser()
         self.parser.read(os.path.abspath(os.path.join(os.path.dirname(__file__), ".\\switchCount.ini")))
@@ -139,12 +138,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def switch_the_switch(self):
         self.counter = int(self.counter) + 1
-        if self.switchPosition:
-            self.switch.position1()
-            self.switchPosition = not self.switchPosition
-        else:
-            self.switch.position2()
-            self.switchPosition = not self.switchPosition
+        self.switch.toggle_all  # Toggle all switches connected to the switch-box
         self.update_parser()
         print(self.counter)
         self.lcdDisplay.setDigitCount(len(str(self.counter)))  # Auto expand the display size
