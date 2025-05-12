@@ -138,7 +138,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def switch_the_switch(self):
         self.counter = int(self.counter) + 1
-        self.switch.toggle_all  # Toggle all switches connected to the switch-box
+        self.switch.toggle_all()  # Toggle all switches connected to the switch-box
         self.update_parser()
         print(self.counter)
         self.lcdDisplay.setDigitCount(len(str(self.counter)))  # Auto expand the display size

@@ -120,7 +120,7 @@ class MenuWindow(QtWidgets.QWidget):
         new_parser = ConfigParser()
         new_parser.read(os.path.abspath(os.path.join(os.path.dirname(__file__), ".\\attenuatorSettings.ini")))
         update_file = open(os.path.abspath(os.path.join(os.path.dirname(__file__), ".\\attenuatorSettings.ini")), 'w')
-        new_parser['GENERAL']['port'] = str(self.addressLineEdit.text())
+        new_parser['GENERAL']['address'] = str(self.addressLineEdit.text())
         new_parser['GENERAL']['baudrate'] = str(self.baudRateLineEdit.text())
         new_parser['GENERAL']['timeout'] = str(self.timeoutLineEdit.text())
         new_parser.write(update_file)
@@ -148,7 +148,7 @@ class MainWindow(QtWidgets.QMainWindow):
         # Layout 1
         self.layout1 = QtWidgets.QHBoxLayout()
 
-        self.menuButton = QtWidgets.QPushButton("Menu")
+        self.menuButton = QtWidgets.QPushButton("Menu", checkable=True)
         self.menuButton.setFixedSize(QtCore.QSize(50, 50))
         self.menuButton.clicked.connect(lambda: self.toggle_menu_window())
 
