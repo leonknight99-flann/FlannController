@@ -70,6 +70,7 @@ class MenuWindow(QtWidgets.QWidget):
 
         self.nameLineEdit = QtWidgets.QTextEdit()
         self.nameLineEdit.setReadOnly(True)  # Read-only
+        self.nameLineEdit.setStyleSheet("QTextEdit {background-color:white; color:black; border: 0px;}")
         self.nameLineEdit.setFixedHeight(40)
         self.layoutMain.addWidget(self.nameLineEdit)
         
@@ -171,6 +172,15 @@ class MainWindow(QtWidgets.QMainWindow):
         self.layout2 = QtWidgets.QGridLayout()
         self.switchButtonMap = {}
 
+        # Layout 3
+        self.layout3 = QtWidgets.QHBoxLayout()
+        
+        self.layout3.addWidget(QtWidgets.QLabel("Message:"))
+        self.messageLineEdit = QtWidgets.QTextEdit()
+        self.messageLineEdit.setStyleSheet("QTextEdit {background-color:white; color:black; border: 0px;}")
+        self.messageLineEdit.setFixedHeight(25)
+        self.messageLineEdit.setReadOnly(True)  # Read-only
+
         '''Layout'''
 
         self.layout1.addWidget(self.menuButton)
@@ -178,8 +188,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.layout1.addWidget(self.connectToAttenuatorButton)
         self.layout1.addWidget(self.demoButton)
 
+        self.layout3.addWidget(self.messageLineEdit)
+
         self.layoutMain.addLayout(self.layout1)
         self.layoutMain.addLayout(self.layout2)
+        self.layoutMain.addLayout(self.layout3)
 
         self.widgetMain = QtWidgets.QWidget(self)
         self.widgetMain.setAutoFillBackground(True)
@@ -200,9 +213,8 @@ class MainWindow(QtWidgets.QMainWindow):
             for s in range(len(self.switches)):
                 switchLabel = QtWidgets.QTextEdit(f'{self.switches_names[s]}')
                 switchLabel.setReadOnly(True)  # Read-only
-                switchLabel.setStyleSheet("QTextEdit {background-color:white; color:black;}")
-                switchLabel.setFixedHeight(50)
-                switchLabel.setFixedWidth(100)
+                switchLabel.setStyleSheet("QTextEdit {background-color:white; color:black; border: 0px; border-radius:2px}")
+                switchLabel.setFixedSize(QtCore.QSize(100, 40))
                 switchLabel.setAlignment(QtCore.Qt.AlignCenter)
                 self.layout2.addWidget(switchLabel, s, 0)
 
@@ -238,6 +250,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def toggle_all_switches(self):
         if self.switches:
             print('Toggling all switches')
+            self.messageLineEdit.setText('Toggling all switches')
             for switch in self.switches:
                 switch.toggle_all()
         else:
@@ -258,9 +271,11 @@ class MainWindow(QtWidgets.QMainWindow):
             self.demoButton.setText("Demo")
 
     def start_demo(self):
+        self.messageLineEdit.setText('Starting demo')
         print('Starting demo')
 
     def stop_demo(self):
+        self.messageLineEdit.setText('Stopping demo')
         print('Stopping demo')
 
 

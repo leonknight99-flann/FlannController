@@ -77,6 +77,7 @@ class MenuWindow(QtWidgets.QWidget):
 
         self.nameLineEdit = QtWidgets.QTextEdit()
         self.nameLineEdit.setReadOnly(True)  # Read-only
+        self.nameLineEdit.setStyleSheet("QTextEdit {background-color:white; color:black; border: 0px;}")
         self.nameLineEdit.setFixedHeight(40)
         self.layoutMain.addWidget(self.nameLineEdit)
         
