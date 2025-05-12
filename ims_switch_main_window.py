@@ -21,7 +21,7 @@ class MenuWindow(QtWidgets.QWidget):
         self.switch = None
         self.attenuator_series = 'Attenuator'
         self.parser = ConfigParser()
-        self.parser.read(os.path.abspath(os.path.join(os.path.dirname(__file__), ".\\switchSettings.ini")))
+        self.parser.read(os.path.abspath(os.path.join(os.path.dirname(__file__), ".\\imsSwitchSettings.ini")))
         self.config = self.parser['GENERAL']
 
         '''User Interface'''
@@ -109,8 +109,8 @@ class MenuWindow(QtWidgets.QWidget):
 
     def update_parser(self):
         new_parser = ConfigParser()
-        new_parser.read(os.path.abspath(os.path.join(os.path.dirname(__file__), ".\\attenuatorSettings.ini")))
-        update_file = open(os.path.abspath(os.path.join(os.path.dirname(__file__), ".\\attenuatorSettings.ini")), 'w')
+        new_parser.read(os.path.abspath(os.path.join(os.path.dirname(__file__), ".\\imsSwitchSettings.ini")))
+        update_file = open(os.path.abspath(os.path.join(os.path.dirname(__file__), ".\\imsSwitchSettings.ini")), 'w')
         new_parser['GENERAL']['port'] = str(self.addressLineEdit.text())
         new_parser['GENERAL']['baudrate'] = str(self.baudRateLineEdit.text())
         new_parser['GENERAL']['timeout'] = str(self.timeoutLineEdit.text())
@@ -129,7 +129,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.mWindow = MenuWindow()
         self.config = self.mWindow.config
-        self.attenuator = self.mWindow.switch
+        self.switches = self.mWindow.switch
 
         '''User Interface'''
 
@@ -139,6 +139,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.menuButton = QtWidgets.QPushButton("Menu")
         self.menuButton.setFixedSize(QtCore.QSize(50, 50))
         self.menuButton.clicked.connect(lambda: self.toggle_menu_window())
+
+        self.toggleAllSwitchesButton = QtWidgets.QPushButton("Toggle All")
+        self.toggleAllSwitchesButton.setFixedSize(QtCore.QSize(100, 50))
+        self.toggleAllSwitchesButton.clicked.connect(lambda: self.toggle_all_switches())
 
 
         '''Layout'''
@@ -156,10 +160,23 @@ class MainWindow(QtWidgets.QMainWindow):
     def toggle_menu_window(self):  # Currently this limits the main window interactions due to an inheritance coding error where the self.attenuator does not update when the settings are changed in the menu window
         if self.mWindow.isVisible():
             self.mWindow.hide()
+            self.setWindowFlag(QtCore.Qt.WindowCloseButtonHint, True)
+            self.show()
         else:
             self.mWindow.show()
+            self.setWindowFlag(QtCore.Qt.WindowCloseButtonHint, False)
+            self.show()
         self.attenuator = self.mWindow.switch
         self.setWindowTitle(f'Flann {self.mWindow.attenuator_series}')
+
+    def closeEvent(self, event):
+        QtWidgets.QApplication.closeAllWindows()
+
+    def toggle_all_switches(self):
+        if self.switches is not None:
+            print('Toggling all switches')
+        else:
+            print("No switches connected.")
 
 
 
@@ -167,6 +184,7 @@ if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
     app.setWindowIcon(QtGui.QIcon(os.path.abspath(os.path.join(os.path.dirname(__file__), ".\\FlannMicrowave.ico"))))
     window = MainWindow()
+    window.setWindowFlag(QtCore.Qt.CustomizeWindowHint, True)
     window.show()
 
     app.exec()

@@ -232,11 +232,15 @@ class MainWindow(QtWidgets.QMainWindow):
             for button in self.disableButtonGroup.buttons():
                 button.setEnabled(True)
             self.attenEnterLineEdit.setReadOnly(False)
+            self.setWindowFlag(QtCore.Qt.WindowCloseButtonHint, True)
+            self.show()
         else:
             self.mWindow.show()
             for button in self.disableButtonGroup.buttons():
                 button.setEnabled(False)
             self.attenEnterLineEdit.setReadOnly(True)
+            self.setWindowFlag(QtCore.Qt.WindowCloseButtonHint, False)
+            self.show()
         self.attenuator = self.mWindow.attenuator
         self.setWindowTitle(f'Flann {self.mWindow.attenuator_series}')
 
@@ -316,6 +320,7 @@ if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
     app.setWindowIcon(QtGui.QIcon(os.path.abspath(os.path.join(os.path.dirname(__file__), ".\\FlannMicrowave.ico"))))
     window = MainWindow()
+    window.setWindowFlag(QtCore.Qt.CustomizeWindowHint, True)
     window.show()
 
     app.exec()
