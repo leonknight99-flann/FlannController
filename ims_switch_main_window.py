@@ -1,7 +1,9 @@
+from operator import index
 import sys
 import os
 
 from configparser import ConfigParser
+from time import sleep
 
 from qtpy import QtCore, QtWidgets, QtGui
 
@@ -144,6 +146,20 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.disableButtonGroup = QtWidgets.QButtonGroup()
 
+        '''DEMO'''
+
+        self.timer = QtCore.QTimer(self)  # Timer for demo
+        self.timer.timeout.connect(self.running_demo)
+
+        self.demoConfig = ConfigParser()
+        self.demoConfig.read(os.path.abspath(os.path.join(os.path.dirname(__file__), ".\\imsSwitchSettings.ini")))
+
+        self.attenuator024 = None
+        self.attenuator625 = None
+
+        self.demoAttenuationList = [10,30,50]
+        self.demoAttenuationIndex = 0
+
         '''User Interface'''
 
         # Layout 1
@@ -162,11 +178,17 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.connectToAttenuatorButton = QtWidgets.QPushButton("Connect\nAttenuators")
         self.connectToAttenuatorButton.setFixedSize(QtCore.QSize(100, 50))
-        self.connectToAttenuatorButton.setStyleSheet("QPushButton {background-color:rgb(0,58,34); color:lightgray;}")
+        self.connectToAttenuatorButton.setStyleSheet("""
+                                                     QPushButton {background-color:rgb(0,58,34); color:lightgray;}
+                                                     QPushButton::hover {background-color:rgb(0,58,34); color:black;}
+                                                     """)
 
         self.demoButton = QtWidgets.QPushButton("Demo", self, checkable=True)
         self.demoButton.setFixedSize(QtCore.QSize(50, 50))
-        self.demoButton.setStyleSheet("QPushButton {background-color:rgb(0,58,34); color:lightgray;}")
+        self.demoButton.setStyleSheet("""
+                                      QPushButton {background-color:rgb(0,58,34); color:lightgray;} 
+                                      QPushButton::hover {background-color:rgb(0,58,34); color:black;}
+                                      """)
         self.demoButton.clicked.connect(lambda: self.demo())
 
         ## Layout 2
@@ -241,12 +263,12 @@ class MainWindow(QtWidgets.QMainWindow):
     def closeEvent(self, event):
         QtWidgets.QApplication.closeAllWindows()
 
-    def toggle_selected_switch(self, switch, switch_number):
+    def toggle_selected_switch(self, switch_driver_number, switch_number):
         if self.switches:
-            selected_switch = self.switches[switch]
+            selected_switch = self.switches[switch_driver_number]
             selected_switch.switch = switch_number
             selected_switch.toggle()
-            self.messageLineEdit.setText(f'Toggling {self.switches_names[switch]} Switch {switch_number}')
+            self.messageLineEdit.setText(f'Toggling {self.switches_names[switch_driver_number]} Switch {switch_number}')
         else:
             print('No switches connected.')
             self.messageLineEdit.setText('No switches connected.')
@@ -269,20 +291,63 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def demo(self):
         if self.demoButton.isChecked():
-            self.start_demo()
             self.demoButton.setText("Stop")
+            self.start_demo()
         else:
             self.stop_demo()
             self.demoButton.setText("Demo")
 
     def start_demo(self):
         self.messageLineEdit.setText('Starting demo')
+        try:
+            if self.attenuator024 is None:
+                self.attenuator024 = Attenuator024(address=self.demoConfig['DEMO024']['address'], 
+                                                timeout=float(self.demoConfig['DEMO024']['timeout']), 
+                                                baudrate=int(self.demoConfig['DEMO024']['baudrate']), 
+                                                timedelay=float(self.demoConfig['DEMO024']['sleep']))
+                self.attenuator024.connect()
+                print('Attenuator 024 connected')
+            if self.attenuator625 is None:
+                self.attenuator625 = Attenuator625(address=self.demoConfig['DEMO625']['address'], 
+                                                tcp_port=int(self.demoConfig['DEMO625']['tcp_port']), 
+                                                timedelay=float(self.demoConfig['DEMO625']['sleep']))
+                self.attenuator625.connect()
+                print('Attenuator 625 connected')
+
+        except:
+            print('Connection Error')
+            self.messageLineEdit.setText(f'Connection Error {self.attenuator024} {self.attenuator625} {self.switches}')
+            self.demoButton.setChecked(False)
+            self.demoButton.setText("Demo")
+            return
+        
+        self.messageLineEdit.setText('024 and 625 connected')
+        self.timer.start(int(self.demoConfig['DEMO']['sleep']))  # Set the timer interval to the sleep time in milliseconds
         print('Starting demo')
 
     def stop_demo(self):
         self.messageLineEdit.setText('Stopping demo')
+        self.timer.stop()
+        if self.attenuator024 is not None:
+            self.attenuator024.close()
+            self.attenuator024 = None
+            print('Attenuator 024 disconnected')
+        if self.attenuator625 is not None:
+            self.attenuator625.close()
+            self.attenuator625 = None
+            print('Attenuator 625 disconnected')
+        self.messageLineEdit.setText('024 and 625 disconnected, demo stopped')
         print('Stopping demo')
 
+    def running_demo(self):
+        sleep_time = float(self.demoConfig['DEMO']['sleep'])
+        index = self.demoAttenuationIndex % len(self.demoAttenuationList)
+        attenuation = self.demoAttenuationList[index]
+        self.attenuator024.attenuation = attenuation
+        self.attenuator625.attenuation = attenuation
+        sleep(sleep_time)
+        self.switches[self.demoConfig['DEMO']['attenuator_switch_index']].toggle_all()
+        self.demoAttenuationIndex += 1
 
 
 if __name__ == '__main__':
