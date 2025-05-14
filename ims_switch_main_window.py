@@ -157,7 +157,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.attenuator024 = None
         self.attenuator625 = None
 
-        self.demoAttenuationList = [10,30,50]
+        self.demoAttenuationList = [int(i) for i in self.demoConfig['DEMO']['attenuation'].split(',')]
         self.demoAttenuationIndex = 0
 
         '''User Interface'''
@@ -172,7 +172,7 @@ class MainWindow(QtWidgets.QMainWindow):
         
         self.toggleAllSwitchesButton = QtWidgets.QPushButton("Toggle All")
         self.toggleAllSwitchesButton.setFixedSize(QtCore.QSize(100, 50))
-        self.toggleAllSwitchesButton.setStyleSheet("QPushButton {background-color:lightgray; color:black;}")
+        self.toggleAllSwitchesButton.setStyleSheet("QPushButton {background-color:rgb(218,233,221); color:black;}")
         self.disableButtonGroup.addButton(self.toggleAllSwitchesButton)
         self.toggleAllSwitchesButton.clicked.connect(lambda: self.toggle_all_switches())
 
