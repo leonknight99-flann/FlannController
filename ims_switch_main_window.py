@@ -17,6 +17,7 @@ class MenuWindow(QtWidgets.QWidget):
         self.setWindowTitle("Menu")
         self.setWindowIcon(QtGui.QIcon(os.path.abspath(os.path.join(os.path.dirname(__file__), ".\\FlannMicrowave.ico"))))
         self.setWindowFlag(QtCore.Qt.WindowCloseButtonHint, False)
+        self.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint, True)
         self.setFixedSize(QtCore.QSize(200, 300))
 
         self.switches = []
@@ -229,6 +230,7 @@ class MainWindow(QtWidgets.QMainWindow):
                         self.switchButtonMap[f'{row}'+key].clicked.connect(lambda: self.toggle_selected_switch(row, 2))
                     elif key == 'Toggle\nBoth':
                         self.switchButtonMap[f'{row}'+key].clicked.connect(lambda: self.switches[row].toggle_all())
+                        self.switchButtonMap[f'{row}'+key].clicked.connect(lambda: self.messageLineEdit.setText(f'Toggling {self.switches_names[row]} Switch 1 and 2'))
                     self.layout2.addWidget(self.switchButtonMap[f'{row}'+key], row, col+1)
         else:
             self.mWindow.show()
@@ -244,8 +246,10 @@ class MainWindow(QtWidgets.QMainWindow):
             selected_switch = self.switches[switch]
             selected_switch.switch = switch_number
             selected_switch.toggle()
+            self.messageLineEdit.setText(f'Toggling {self.switches_names[switch]} Switch {switch_number}')
         else:
             print('No switches connected.')
+            self.messageLineEdit.setText('No switches connected.')
 
     def toggle_all_switches(self):
         if self.switches:
@@ -255,6 +259,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 switch.toggle_all()
         else:
             print('No switches connected.')
+            self.messageLineEdit.setText('No switches connected.')
 
     def remove_switch_buttons(self):
         while self.layout2.count():

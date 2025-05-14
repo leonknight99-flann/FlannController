@@ -24,6 +24,7 @@ class MenuWindow(QtWidgets.QWidget):
         self.setWindowTitle("Menu")
         self.setWindowIcon(QtGui.QIcon(os.path.abspath(os.path.join(os.path.dirname(__file__), ".\\FlannMicrowave.ico"))))
         self.setWindowFlag(QtCore.Qt.WindowCloseButtonHint, False)
+        self.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint, True)
         self.setFixedSize(QtCore.QSize(200, 300))
 
         self.attenuator = None
