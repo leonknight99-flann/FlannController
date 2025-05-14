@@ -167,7 +167,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.menuButton = QtWidgets.QPushButton("Menu", self, checkable=True)
         self.menuButton.setFixedSize(QtCore.QSize(50, 50))
-        self.menuButton.setStyleSheet("QPushButton {background-color:lightgray; color:black;}")
+        self.menuButton.setStyleSheet("QPushButton {background-color:rgb(218,233,221); color:black;}")
         self.menuButton.clicked.connect(lambda: self.toggle_menu_window())
         
         self.toggleAllSwitchesButton = QtWidgets.QPushButton("Toggle All")
