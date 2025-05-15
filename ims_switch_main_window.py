@@ -118,7 +118,7 @@ class MenuWindow(QtWidgets.QWidget):
         new_parser = ConfigParser()
         new_parser.read(os.path.abspath(os.path.join(os.path.dirname(__file__), ".\\imsSwitchSettings.ini")))
         update_file = open(os.path.abspath(os.path.join(os.path.dirname(__file__), ".\\imsSwitchSettings.ini")), 'w')
-        new_parser['GENERAL']['port'] = str(self.addressLineEdit.text())
+        new_parser['GENERAL']['address'] = str(self.addressLineEdit.text())
         new_parser['GENERAL']['baudrate'] = str(self.baudRateLineEdit.text())
         new_parser['GENERAL']['timeout'] = str(self.timeoutLineEdit.text())
         new_parser.write(update_file)
