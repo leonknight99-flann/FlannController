@@ -86,11 +86,9 @@ class MenuWindow(QtWidgets.QWidget):
     def connect_to_com_switches(self):
         try:
             switchPortList = self.addressLineEdit.text().split(',')
-            print(switchPortList)
             for address in switchPortList:
                 print(address)
                 if address.lower().startswith('com'):
-                    print('com')
                     switch = Switch337(switch=1,
                                        address=address, 
                                        timeout=float(self.timeoutLineEdit.text()), 
@@ -229,6 +227,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
             switchButtonLabels = [['Toggle\n1', 'Toggle\n2', 'Toggle\nBoth'],] * len(self.switches)
 
+            print(switchButtonLabels)
+
             for s in range(len(self.switches)):
                 switchLabel = QtWidgets.QTextEdit(f'{self.switches_names[s]}')
                 switchLabel.setReadOnly(True)  # Read-only
@@ -239,16 +239,16 @@ class MainWindow(QtWidgets.QMainWindow):
 
             for row, keys in enumerate(switchButtonLabels):
                 for col, key in enumerate(keys):
-                    self.switchButtonMap[f'{row}'+key] = QtWidgets.QPushButton(f'{key}')
+                    self.switchButtonMap[f'{row}'+key] = QtWidgets.QPushButton(key)
                     self.switchButtonMap[f'{row}'+key].setFixedSize(QtCore.QSize(75, 50))
                     self.switchButtonMap[f'{row}'+key].setStyleSheet("QPushButton {background-color:lightgray; color:black;}")
                     if key == 'Toggle\n1':
-                        self.switchButtonMap[f'{row}'+key].clicked.connect(lambda: self.toggle_selected_switch(row, 1))
+                        self.switchButtonMap[f'{row}'+key].clicked.connect(lambda _, row=row: self.toggle_selected_switch(row, 1))
                     elif key == 'Toggle\n2':
-                        self.switchButtonMap[f'{row}'+key].clicked.connect(lambda: self.toggle_selected_switch(row, 2))
+                        self.switchButtonMap[f'{row}'+key].clicked.connect(lambda _, row=row: self.toggle_selected_switch(row, 2))
                     elif key == 'Toggle\nBoth':
-                        self.switchButtonMap[f'{row}'+key].clicked.connect(lambda: self.switches[row].toggle_all())
-                        self.switchButtonMap[f'{row}'+key].clicked.connect(lambda: self.messageLineEdit.setText(f'Toggling {self.switches_names[row]} Switch 1 and 2'))
+                        self.switchButtonMap[f'{row}'+key].clicked.connect(lambda _, row=row: self.switches[row].toggle_all())
+                        self.switchButtonMap[f'{row}'+key].clicked.connect(lambda _, row=row: self.messageLineEdit.setText(f'Toggling {self.switches_names[row]} Switch 1 and 2'))
                     self.layout2.addWidget(self.switchButtonMap[f'{row}'+key], row, col+1)
         else:
             self.mWindow.show()
@@ -266,17 +266,14 @@ class MainWindow(QtWidgets.QMainWindow):
             selected_switch.toggle()
             self.messageLineEdit.setText(f'Toggling {self.switches_names[switch_driver_number]} Switch {switch_number}')
         else:
-            print('No switches connected.')
             self.messageLineEdit.setText('No switches connected.')
 
     def toggle_all_switches(self):
         if self.switches:
-            print('Toggling all switches')
             self.messageLineEdit.setText('Toggling all switches')
             for switch in self.switches:
                 switch.toggle_all()
         else:
-            print('No switches connected.')
             self.messageLineEdit.setText('No switches connected.')
 
     def remove_switch_buttons(self):
@@ -319,7 +316,6 @@ class MainWindow(QtWidgets.QMainWindow):
         
         self.messageLineEdit.setText('024 and 625 connected')
         self.timer.start(int(self.demoConfig['DEMO']['sleep']))  # Set the timer interval to the sleep time in milliseconds
-        print('Starting demo')
 
     def stop_demo(self):
         self.messageLineEdit.setText('Stopping demo')
@@ -333,7 +329,6 @@ class MainWindow(QtWidgets.QMainWindow):
             self.attenuator625 = None
             print('Attenuator 625 disconnected')
         self.messageLineEdit.setText('024 and 625 disconnected, demo stopped')
-        print('Stopping demo')
 
     def running_demo(self):
         sleep_time = float(self.demoConfig['DEMO']['sleep'])
