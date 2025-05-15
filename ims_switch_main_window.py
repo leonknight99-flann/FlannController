@@ -153,6 +153,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.demoAttenuationList = [int(i) for i in self.demoConfig['DEMO']['attenuation'].split(',')]
         self.demoAttenuationIndex = 0
+        self.demoSwitchBool = False
 
         '''User Interface'''
 
@@ -170,8 +171,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.disableButtonGroup.addButton(self.toggleAllSwitchesButton)
         self.toggleAllSwitchesButton.clicked.connect(lambda: self.toggle_all_switches())
 
-        self.connectToAttenuatorButton = QtWidgets.QPushButton("Connect\nAttenuators")
+        self.connectToAttenuatorButton = QtWidgets.QPushButton("Connect\nAttenuators", self, checkable=True)
         self.connectToAttenuatorButton.setFixedSize(QtCore.QSize(100, 50))
+        self.connectToAttenuatorButton.clicked.connect(lambda: self.connect_to_attenuator())
         self.connectToAttenuatorButton.setStyleSheet("""
                                                      QPushButton {background-color:rgb(0,58,34); color:lightgray;}
                                                      QPushButton::hover {background-color:rgb(0,58,34); color:black;}
@@ -227,8 +229,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
             switchButtonLabels = [['Toggle\n1', 'Toggle\n2', 'Toggle\nBoth'],] * len(self.switches)
 
-            print(switchButtonLabels)
-
             for s in range(len(self.switches)):
                 switchLabel = QtWidgets.QTextEdit(f'{self.switches_names[s]}')
                 switchLabel.setReadOnly(True)  # Read-only
@@ -282,6 +282,38 @@ class MainWindow(QtWidgets.QMainWindow):
             if item.widget() is not None:
                 item.widget().deleteLater()
 
+    def connect_to_attenuator(self):
+        if self.connectToAttenuatorButton.isChecked():
+            try:
+                if self.attenuator024 is None:
+                    self.attenuator024 = Attenuator024(address=self.demoConfig['DEMO024']['address'], 
+                                                    timeout=float(self.demoConfig['DEMO024']['timeout']), 
+                                                    baudrate=int(self.demoConfig['DEMO024']['baudrate']), 
+                                                    timedelay=float(self.demoConfig['DEMO024']['sleep']))
+                    print('Attenuator 024 connected')
+                if self.attenuator625 is None:
+                    self.attenuator625 = Attenuator625(address=self.demoConfig['DEMO625']['address'], 
+                                                    tcp_port=int(self.demoConfig['DEMO625']['tcp_port']), 
+                                                    timedelay=float(self.demoConfig['DEMO625']['sleep']))
+                    print('Attenuator 625 connected')
+            except:
+                print('Connection Error')
+                self.messageLineEdit.setText(f'Connection Error {self.attenuator024} {self.attenuator625} {self.switches}')
+                self.connectToAttenuatorButton.setChecked(False)
+                return
+            self.messageLineEdit.setText('Attenuators connected')
+        
+        else:
+            if self.attenuator024 is not None:
+                self.attenuator024.close()
+                self.attenuator024 = None
+                print('Attenuator 024 disconnected')
+            if self.attenuator625 is not None:
+                self.attenuator625.close()
+                self.attenuator625 = None
+                print('Attenuator 625 disconnected')
+            self.messageLineEdit.setText('Attenuators disconnected')
+
     def demo(self):
         if self.demoButton.isChecked():
             self.demoButton.setText("Stop")
@@ -292,53 +324,33 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def start_demo(self):
         self.messageLineEdit.setText('Starting demo')
-        try:
-            if self.attenuator024 is None:
-                self.attenuator024 = Attenuator024(address=self.demoConfig['DEMO024']['address'], 
-                                                timeout=float(self.demoConfig['DEMO024']['timeout']), 
-                                                baudrate=int(self.demoConfig['DEMO024']['baudrate']), 
-                                                timedelay=float(self.demoConfig['DEMO024']['sleep']))
-                self.attenuator024.connect()
-                print('Attenuator 024 connected')
-            if self.attenuator625 is None:
-                self.attenuator625 = Attenuator625(address=self.demoConfig['DEMO625']['address'], 
-                                                tcp_port=int(self.demoConfig['DEMO625']['tcp_port']), 
-                                                timedelay=float(self.demoConfig['DEMO625']['sleep']))
-                self.attenuator625.connect()
-                print('Attenuator 625 connected')
 
-        except:
-            print('Connection Error')
+        if any([self.attenuator024 is None, self.attenuator625 is None, not self.switches]):
             self.messageLineEdit.setText(f'Connection Error {self.attenuator024} {self.attenuator625} {self.switches}')
             self.demoButton.setChecked(False)
             self.demoButton.setText("Demo")
             return
         
-        self.messageLineEdit.setText('024 and 625 connected')
         self.timer.start(int(self.demoConfig['DEMO']['sleep']))  # Set the timer interval to the sleep time in milliseconds
 
     def stop_demo(self):
         self.messageLineEdit.setText('Stopping demo')
         self.timer.stop()
-        if self.attenuator024 is not None:
-            self.attenuator024.close()
-            self.attenuator024 = None
-            print('Attenuator 024 disconnected')
-        if self.attenuator625 is not None:
-            self.attenuator625.close()
-            self.attenuator625 = None
-            print('Attenuator 625 disconnected')
-        self.messageLineEdit.setText('024 and 625 disconnected, demo stopped')
+        self.messageLineEdit.setText('Demo stopped')
 
     def running_demo(self):
-        sleep_time = float(self.demoConfig['DEMO']['sleep'])
-        index = self.demoAttenuationIndex % len(self.demoAttenuationList)
-        attenuation = self.demoAttenuationList[index]
-        self.attenuator024.attenuation = attenuation
-        self.attenuator625.attenuation = attenuation
-        sleep(sleep_time)
-        self.switches[self.demoConfig['DEMO']['attenuator_switch_index']].toggle_all()
-        self.demoAttenuationIndex += 1
+        print(self.demoSwitchBool)
+        self.demoSwitchBool = not self.demoSwitchBool
+        if self.demoSwitchBool:
+            self.messageLineEdit.setText('Toggling demo switches')
+            self.switches[int(self.demoConfig['DEMO']['attenuator_switch_index'])].toggle_all()
+        else:
+            index = self.demoAttenuationIndex % len(self.demoAttenuationList)
+            attenuation = self.demoAttenuationList[index]
+            self.messageLineEdit.setText(f'Setting attenuation to {attenuation} dB')
+            self.attenuator024.attenuation = attenuation
+            self.attenuator625.attenuation = attenuation
+            self.demoAttenuationIndex += 1
 
 
 if __name__ == '__main__':
