@@ -80,10 +80,6 @@ class MenuWindow(QtWidgets.QWidget):
         self.disconnectButton = QtWidgets.QPushButton("Disconnect")
         self.disconnectButton.clicked.connect(lambda: self.disconnect_from_switches())
         self.layoutMain.addWidget(self.disconnectButton)
-
-        self.positionToggle = QtWidgets.QCheckBox()
-        self.positionToggle.setText("Set Position")
-        self.layoutMain.addWidget(self.positionToggle)
         
         self.setLayout(self.layoutMain)
 
