@@ -1,4 +1,5 @@
 from enum import Enum
+from turtle import pos
 
 from flann.vi import FlannProgrammable
 
@@ -61,7 +62,7 @@ class Switch337(FlannProgrammable):
     def position(self):
         '''Current selected switch position'''
         self.write(f'SWITCH{int(self._switch_number)}_POS?')
-        return self.read
+        return self.read()
     
     def position1(self):
         '''Selected switch position 1'''

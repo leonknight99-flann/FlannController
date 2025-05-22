@@ -165,11 +165,16 @@ class MainWindow(QtWidgets.QMainWindow):
         self.menuButton.setStyleSheet("QPushButton {background-color:rgb(218,233,221); color:black;}")
         self.menuButton.clicked.connect(lambda: self.toggle_menu_window())
         
-        self.toggleAllSwitchesButton = QtWidgets.QPushButton("Toggle All")
-        self.toggleAllSwitchesButton.setFixedSize(QtCore.QSize(100, 50))
+        self.toggleAllSwitchesButton = QtWidgets.QPushButton("Toggle\nAll")
+        self.toggleAllSwitchesButton.setFixedSize(QtCore.QSize(75, 50))
         self.toggleAllSwitchesButton.setStyleSheet("QPushButton {background-color:rgb(218,233,221); color:black;}")
         self.disableButtonGroup.addButton(self.toggleAllSwitchesButton)
         self.toggleAllSwitchesButton.clicked.connect(lambda: self.toggle_all_switches())
+
+        self.whereIsSwitchesButton = QtWidgets.QPushButton("Position?")
+        self.whereIsSwitchesButton.setFixedSize(QtCore.QSize(75, 50))
+        self.whereIsSwitchesButton.setStyleSheet("QPushButton {background-color:rgb(218,233,221); color:black;}")
+        self.whereIsSwitchesButton.clicked.connect(lambda: self.where_are_switches())
 
         self.connectToAttenuatorButton = QtWidgets.QPushButton("Connect\nAttenuators", self, checkable=True)
         self.connectToAttenuatorButton.setFixedSize(QtCore.QSize(100, 50))
@@ -204,6 +209,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.layout1.addWidget(self.menuButton)
         self.layout1.addWidget(self.toggleAllSwitchesButton)
+        self.layout1.addWidget(self.whereIsSwitchesButton)
         self.layout1.addWidget(self.connectToAttenuatorButton)
         self.layout1.addWidget(self.demoButton)
 
@@ -273,6 +279,25 @@ class MainWindow(QtWidgets.QMainWindow):
             self.messageLineEdit.setText('Toggling all switches')
             for switch in self.switches:
                 switch.toggle_all()
+        else:
+            self.messageLineEdit.setText('No switches connected.')
+
+    def where_are_switches(self):
+        positionList = []
+        if self.switches:
+            for switch in self.switches:
+                switch.switch = 1
+                positionList.append(switch.position)
+                switch.switch = 2
+                positionList.append(switch.position)
+            print(positionList)
+            pop_up = QtWidgets.QMessageBox(self)
+            pop_up.setWindowTitle("Switch Position")
+            pop_up.setText(f'Switches positions:\n{'\n'.join(positionList)}')
+            pop_up.setStandardButtons(QtWidgets.QMessageBox.Ok)
+            pop_up.setIcon(QtWidgets.QMessageBox.Information)
+            pop_up.setStyleSheet("QMessageBox {background-color: rgb(132,181,141); color:black;}")
+            pop_up.exec()
         else:
             self.messageLineEdit.setText('No switches connected.')
 
