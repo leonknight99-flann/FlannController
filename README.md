@@ -2,8 +2,17 @@
 
 Python libary to connect to Flann's programmable instruments and standardise the command structure.
 
+## Example
 
-# Applications
+```python
+>>> from flann.vi.switch import Switch337
+>>> with CommChannel(address=6) as vna:
+...     vna.ch3.parameter = "S21"
+...     s21 = vna.read(channel=3, data_status="corrected")
+>>> 
+```
+
+## Applications
 Software to control Flann's programmable devices. These currently include:
 
 - Attenuator Application (inspired by the 625 layout)
