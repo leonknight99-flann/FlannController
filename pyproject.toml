@@ -5,7 +5,26 @@ description = "Flann's programmable instruments python control"
 
 dependencies = [
     "pyserial >= 3.5"
+]
+
+requires-python = ">=3.12"
+authors = [
+    { name = "Leon Knight", email = "" }
+]
+description = "Flann's programmable instruments python control library, providing a simple interface to control Flann's range of programmable instruments."
+
+keywords = [
+    "Flann",
+    "instrument control",
+    "programmable instruments",
+    "rf engineering",
+    "microwave engineering",
+    "radio frequency",
+    "microwave",
+    "waveguide"
+]
 
 [project.urls]
-homepage = "https://flann.com/"
-repository = "https://github.com/leonknight99-flann/FlannController"
+Homepage = "https://flann.com/"
+Repository = "https://github.com/leonknight99-flann/FlannController"
+Issues = "https://github.com/leonknight99-flann/FlannController/issues"
