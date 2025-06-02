@@ -2,7 +2,7 @@
 
 Python libary to connect to Flann's programmable instruments and standardise the command structure.
 
-## Example
+## Examples
 
 ```python
 from flann.vi.switch import Switch337
@@ -27,7 +27,6 @@ print(atten.id())  # Prints the identification of the attenuator
 atten.position = 500  # Sets the position to 500 steps
 print(atten.position())  # get the current position steps value
 ```
-
 
 ## Applications
 Software to control Flann's programmable devices. These currently include:
