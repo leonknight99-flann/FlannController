@@ -1,9 +1,7 @@
-from operator import index
 import sys
 import os
 
 from configparser import ConfigParser
-from time import sleep
 
 from qtpy import QtCore, QtWidgets, QtGui
 
