@@ -134,7 +134,9 @@ class MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("Flann Attenuator")
+        self._version = '1.2.0'
+
+        self.setWindowTitle(f"Flann Attenuator {self._version}")
         self.setFixedSize(QtCore.QSize(260, 300))
 
         self.mWindow = MenuWindow()
