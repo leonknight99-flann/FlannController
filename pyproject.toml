@@ -21,9 +21,6 @@ dependencies = [
     "pyserial >= 3.5"
 ]
 
-
-
-
 keywords = [
     "Flann",
     "instrument control",
@@ -39,3 +36,6 @@ keywords = [
 Homepage = "https://flann.com/"
 Repository = "https://github.com/flannmicrowave/FlannController"
 Issues = "https://github.com/flannmicrowave/FlannController/issues"
+
+[tool.setuptools.dynamic]
+version = {attr = "flann.__version__"}
