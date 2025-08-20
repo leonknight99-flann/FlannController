@@ -8,7 +8,7 @@ class Attenuator624(FlannProgrammable):
 
         self._resource.connect((address, tcp_port))
 
-        self.series_number = '625'
+        self.series_number = '624'
 
         id_str = self.id()
         assert(self.series_number in id_str)

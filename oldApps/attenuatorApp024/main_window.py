@@ -1,11 +1,11 @@
 import sys
 import os
+import serial
+import time
 
 from configparser import ConfigParser
 
 from qtpy import QtCore, QtWidgets, QtGui
-
-from flann.vi.attenuator import Attenuator024, Attenuator625
 
 class Color(QtWidgets.QWidget):
     def __init__(self, r,g,b):
@@ -24,25 +24,24 @@ class MenuWindow(QtWidgets.QWidget):
         self.setWindowTitle("Menu")
         self.setWindowIcon(QtGui.QIcon(os.path.abspath(os.path.join(os.path.dirname(__file__), ".\\FlannMicrowave.ico"))))
         self.setWindowFlag(QtCore.Qt.WindowCloseButtonHint, False)
-        self.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint, True)
-        self.setFixedSize(QtCore.QSize(200, 300))
+        self.setFixedSize(QtCore.QSize(150, 220))
 
-        self.attenuator = None
-        self.attenuator_series = 'Attenuator'
+        self.serialAttenuator = None
         self.parser = ConfigParser()
-        self.parser.read(os.path.abspath(os.path.join(os.path.dirname(__file__), ".\\attenuatorSettings.ini")))
+        self.parser.read(os.path.abspath(os.path.join(os.path.dirname(__file__), ".\\settings.ini")))
         self.config = self.parser['GENERAL']
 
         '''User Interface'''
 
         self.layoutMain = QtWidgets.QVBoxLayout()
 
-        self.layoutAddress = QtWidgets.QHBoxLayout()
-        self.layoutAddress.addWidget(QtWidgets.QLabel("Address:"))
-        self.addressLineEdit = QtWidgets.QLineEdit()
-        self.addressLineEdit.setText(self.config['address'])
-        self.layoutAddress.addWidget(self.addressLineEdit)
-        self.layoutMain.addLayout(self.layoutAddress)
+        self.layoutCOM = QtWidgets.QHBoxLayout()
+        self.layoutCOM.addWidget(QtWidgets.QLabel("Serial Port:"))
+        self.COMcomboBox = QtWidgets.QSpinBox(value=int(self.config['port']))
+        self.COMcomboBox.setMinimum(1)
+        self.COMcomboBox.setMaximum(99)
+        self.layoutCOM.addWidget(self.COMcomboBox)
+        self.layoutMain.addLayout(self.layoutCOM)
 
         self.layoutBaudRate = QtWidgets.QHBoxLayout()
         self.layoutBaudRate.addWidget(QtWidgets.QLabel("Baud Rate:"))
@@ -52,38 +51,22 @@ class MenuWindow(QtWidgets.QWidget):
         self.layoutMain.addLayout(self.layoutBaudRate)
 
         self.layoutTimeout = QtWidgets.QHBoxLayout()
-        self.layoutTimeout.addWidget(QtWidgets.QLabel("Serial Timeout:"))
+        self.layoutTimeout.addWidget(QtWidgets.QLabel("Timeout:"))
         self.timeoutLineEdit = QtWidgets.QLineEdit()
         self.timeoutLineEdit.setText(str(self.config['timeout']))
         self.layoutTimeout.addWidget(self.timeoutLineEdit)
         self.layoutMain.addLayout(self.layoutTimeout)
 
-        self.layoutTcpPort = QtWidgets.QHBoxLayout()
-        self.layoutTcpPort.addWidget(QtWidgets.QLabel("TCP Port:"))
-        self.tcpPortLineEdit = QtWidgets.QLineEdit()
-        self.tcpPortLineEdit.setText(str(self.config['tcp_port']))
-        self.layoutTcpPort.addWidget(self.tcpPortLineEdit)
-        self.layoutMain.addLayout(self.layoutTcpPort)
-
-        self.layoutAppDelay = QtWidgets.QHBoxLayout()
-        self.layoutAppDelay.addWidget(QtWidgets.QLabel("App Delay:"))
-        self.appDelayLineEdit = QtWidgets.QLineEdit()
-        self.appDelayLineEdit.setText(str(self.config['sleep']))
-        self.layoutAppDelay.addWidget(self.appDelayLineEdit)
-        self.layoutMain.addLayout(self.layoutAppDelay)
-
         self.connectButton = QtWidgets.QPushButton("Connect")
-        self.connectButton.clicked.connect(lambda: self.connect_to_atten())
+        self.connectButton.clicked.connect(lambda: self.connect_to_serial())
         self.layoutMain.addWidget(self.connectButton)
 
-        self.nameLineEdit = QtWidgets.QTextEdit()
-        self.nameLineEdit.setReadOnly(True)  # Read-only
-        self.nameLineEdit.setStyleSheet("QTextEdit {background-color:white; color:black; border: 0px;}")
-        self.nameLineEdit.setFixedHeight(40)
+        self.nameLineEdit = QtWidgets.QLineEdit()
+        self.nameLineEdit.setReadOnly(True)    # Read-only
         self.layoutMain.addWidget(self.nameLineEdit)
         
         self.disconnectButton = QtWidgets.QPushButton("Disconnect")
-        self.disconnectButton.clicked.connect(lambda: self.disconnect_from_atten())
+        self.disconnectButton.clicked.connect(lambda: self.disconnect_from_serial())
         self.layoutMain.addWidget(self.disconnectButton)
 
         self.positionToggle = QtWidgets.QCheckBox()
@@ -92,37 +75,29 @@ class MenuWindow(QtWidgets.QWidget):
         
         self.setLayout(self.layoutMain)
 
-    def connect_to_atten(self):
+    def connect_to_serial(self):
         try:
-            if self.attenuator is None and self.addressLineEdit.text().lower().startswith('com'):
-                self.attenuator = Attenuator024(address=self.addressLineEdit.text(), 
-                                                timeout=float(self.timeoutLineEdit.text()), 
-                                                baudrate=int(self.baudRateLineEdit.text()), 
-                                                timedelay=float(self.appDelayLineEdit.text()))
-                self.attenuator_series = '024'
-            else:
-                self.attenuator = Attenuator625(address=self.addressLineEdit.text(), 
-                                                tcp_port=int(self.tcpPortLineEdit.text()), 
-                                                timedelay=float(self.appDelayLineEdit.text()))
-                self.attenuator_series = '625'
-            name = self.attenuator.id()
-            self.nameLineEdit.setText(name)
-            self.update_parser()
+            if self.serialAttenuator is None:
+                self.serialAttenuator = serial.Serial(f'COM{self.COMcomboBox.value()}', self.baudRateLineEdit.text(), timeout=float(self.timeoutLineEdit.text()))
+                self.serialAttenuator.write('CL_IDENTITY?#'.encode())
+                name = self.serialAttenuator.readline().decode()
+                self.nameLineEdit.setText(name)
+                self.update_parser()
         except:
             print('Connection Error')
 
-    def disconnect_from_atten(self):
-        if self.attenuator is not None:
-            self.attenuator.close()
-            self.attenuator = None
+    def disconnect_from_serial(self):
+        if self.serialAttenuator is not None:
+            self.serialAttenuator.close()
+            self.serialAttenuator = None
             self.nameLineEdit.clear()
             self.update_parser()
 
     def update_parser(self):
         new_parser = ConfigParser()
-        new_parser.read(os.path.abspath(os.path.join(os.path.dirname(__file__), ".\\attenuatorSettings.ini")))
-        update_file = open(os.path.abspath(os.path.join(os.path.dirname(__file__), ".\\attenuatorSettings.ini")), 'w')
-        new_parser['GENERAL']['address'] = str(self.addressLineEdit.text())
+        new_parser.read(os.path.abspath(os.path.join(os.path.dirname(__file__), ".\\settings.ini")))
+        update_file = open(os.path.abspath(os.path.join(os.path.dirname(__file__), ".\\settings.ini")), 'w')
+        new_parser['GENERAL']['port'] = str(self.COMcomboBox.value())
         new_parser['GENERAL']['baudrate'] = str(self.baudRateLineEdit.text())
         new_parser['GENERAL']['timeout'] = str(self.timeoutLineEdit.text())
         new_parser.write(update_file)
@@ -130,18 +105,16 @@ class MenuWindow(QtWidgets.QWidget):
         
 
 class MainWindow(QtWidgets.QMainWindow):
-    '''Main attenuator control window insprired by the Flann 625'''
+    '''Main 024 control window insprired by the Flann 625'''
     def __init__(self):
         super().__init__()
 
-        self._version = '1.2.0'
-
-        self.setWindowTitle(f"Flann Attenuator {self._version}")
+        self.setWindowTitle("Flann 024")
         self.setFixedSize(QtCore.QSize(260, 300))
 
+        self.attenuator = None
         self.mWindow = MenuWindow()
         self.config = self.mWindow.config
-        self.attenuator = self.mWindow.attenuator
 
         self.layoutMain = QtWidgets.QVBoxLayout()
 
@@ -152,7 +125,7 @@ class MainWindow(QtWidgets.QMainWindow):
         # Layout 1
         self.layout1 = QtWidgets.QHBoxLayout()
 
-        self.menuButton = QtWidgets.QPushButton("Menu", checkable=True)
+        self.menuButton = QtWidgets.QPushButton("Menu")
         self.menuButton.setFixedSize(QtCore.QSize(50, 50))
         self.menuButton.clicked.connect(lambda: self.toggle_menu_window())
 
@@ -236,17 +209,12 @@ class MainWindow(QtWidgets.QMainWindow):
             for button in self.disableButtonGroup.buttons():
                 button.setEnabled(True)
             self.attenEnterLineEdit.setReadOnly(False)
-            self.setWindowFlag(QtCore.Qt.WindowCloseButtonHint, True)
-            self.show()
         else:
             self.mWindow.show()
             for button in self.disableButtonGroup.buttons():
                 button.setEnabled(False)
             self.attenEnterLineEdit.setReadOnly(True)
-            self.setWindowFlag(QtCore.Qt.WindowCloseButtonHint, False)
-            self.show()
-        self.attenuator = self.mWindow.attenuator
-        self.setWindowTitle(f'Flann {self.mWindow.attenuator_series}')
+        self.attenuator = self.mWindow.serialAttenuator
 
     def closeEvent(self, event):
         QtWidgets.QApplication.closeAllWindows()
@@ -262,59 +230,78 @@ class MainWindow(QtWidgets.QMainWindow):
         self.attenEnterLineEdit.clear()
 
     def get_current_attenuation(self):
+        time.sleep(float(self.config['sleep']))
+        self.attenuator.write('CL_VALUE?#'.encode())
+        current_val = self.attenuator.readline().split(b'\x00')[0] .decode()# removes the \x00 from the end of the string "3.0\x00"
+        print(current_val)
         try:
-            current_val = self.attenuator.attenuation()  # get the current attenuation value
+            current_val = current_val.split(' ')[-1].strip()  # readline returns "Vane is at 20.0dB"
+            print(current_val)
+            current_val = current_val.rsplit('dB')[0]  # removes the dB from the end of the string "3.0dB"
+            print(current_val)
+            current_val = float(current_val)
             print(current_val)
         except ValueError:
-            current_val = '-1'
+            current_val = '0'
             print("Error reading current attenuation value")
         
         return current_val
-    
+
     def go_to_attenuation(self):
-        newAttenuation = float(self.read_attenuation_entry())
+        newAttenuation = self.read_attenuation_entry()
         print(f"New attenuation: {newAttenuation}")
         self.clear_attenuation_entry()
 
         if self.attenuator == None:
             self.attenReadLineEdit.setText('Connection Error')
-            print("No attenuator connected")
+            print("Serial port not connected")
             return
         if self.mWindow.positionToggle.isChecked():
             try:
-                self.attenuator.position = int(newAttenuation)  # set the position in steps
+                if len(newAttenuation) < 4:
+                    zeroString = '0' * (4 - len(newAttenuation))
+                    newAttenuation = zeroString + newAttenuation
+                self.attenuator.write(f'CL_STEPS_SET {newAttenuation}#'.encode())
+                self.attenuator.readline().decode()
                 self.attenReadLineEdit.setText(f'Position {newAttenuation}')
             except:
                 print("Error setting position")
                 self.attenReadLineEdit.setText('Position Error')
         else:
             try:
-                self.attenuator.attenuation = newAttenuation  # set the attenuation value
+                self.attenuator.write(f'CL_VALUE_SET {newAttenuation}#'.encode())
+                self.attenuator.readline().decode()
                 self.attenReadLineEdit.setText(str(self.get_current_attenuation()))
             except:
                 print("Error setting attenuation")
                 self.attenReadLineEdit.setText('dB Error')
 
     def increment_attenuation(self):
-        increment = float(self.read_attenuation_entry())
+        increment = self.read_attenuation_entry()
+        current_val = self.get_current_attenuation()
         print(f"Increment: {increment}")
         try:
-            self.attenuator.increment_store = increment  # set the increment value
-            self.attenuator.increment_store()
-            self.attenuator.increment()  # increment the attenuation
-            self.attenReadLineEdit.setText(str(self.get_current_attenuation()))
+            if float(increment) + current_val < float(self.config['max_attenuation']):
+                self.attenuator.write(f'CL_INCR_SET {increment}#'.encode())
+                self.attenuator.readline().decode()
+                self.attenuator.write(f'CL_INCREMENT#'.encode())
+                self.attenuator.readline().decode()
+                self.attenReadLineEdit.setText(str(self.get_current_attenuation()))
         except:
             print("Error incrementing attenuation")
             self.attenReadLineEdit.setText('dB Error')
 
     def decrement_attenuation(self):
-        decrement = float(self.read_attenuation_entry())
+        decrement = self.read_attenuation_entry()
+        current_val = self.get_current_attenuation()
         print(f"Decrement: {decrement}")
         try:
-            self.attenuator.increment_store = decrement
-            self.attenuator.increment_store()
-            self.attenuator.decrement()  # decrement the attenuation
-            self.attenReadLineEdit.setText(str(self.get_current_attenuation()))
+            if -float(decrement) + current_val > float(self.config['min_attenuation']):
+                self.attenuator.write(f'CL_INCR_SET {decrement}#'.encode())
+                self.attenuator.readline().decode()
+                self.attenuator.write(f'CL_DECREMENT#'.encode())
+                self.attenuator.readline().decode()
+                self.attenReadLineEdit.setText(str(self.get_current_attenuation()))
         except:
             print("Error decrementing attenuation")
             self.attenReadLineEdit.setText('dB Error')
@@ -324,7 +311,6 @@ if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
     app.setWindowIcon(QtGui.QIcon(os.path.abspath(os.path.join(os.path.dirname(__file__), ".\\FlannMicrowave.ico"))))
     window = MainWindow()
-    window.setWindowFlag(QtCore.Qt.CustomizeWindowHint, True)
     window.show()
 
     app.exec()
